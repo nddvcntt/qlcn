@@ -2,12 +2,29 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input, Select } from "@/components/ui/input"
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { Plus, Trash2 } from "lucide-react"
+
+const fetchData = async (setCosts: any, setCategories: any, setLoading: any) => {
+  try {
+    const [costsRes, catRes] = await Promise.all([
+      fetch("/api/costs"),
+      fetch("/api/costs?action=categories"),
+    ])
+    const costsData = await costsRes.json()
+    const catData = await catRes.json()
+    if (costsData.success) setCosts(costsData.data)
+    if (catData.success) setCategories(catData.data)
+  } catch (error) {
+    console.error("Error fetching data:", error)
+  } finally {
+    setLoading(false)
+  }
+}
 
 interface CostRecord {
   id: string
@@ -44,25 +61,8 @@ export default function CostsPage() {
   })
 
   useEffect(() => {
-    fetchData()
+    fetchData(setCosts, setCategories, setLoading)
   }, [])
-
-  const fetchData = async () => {
-    try {
-      const [costsRes, catRes] = await Promise.all([
-        fetch("/api/costs"),
-        fetch("/api/costs?action=categories"),
-      ])
-      const costsData = await costsRes.json()
-      const catData = await catRes.json()
-      if (costsData.success) setCosts(costsData.data)
-      if (catData.success) setCategories(catData.data)
-    } catch (error) {
-      console.error("Error fetching data:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const filteredCosts = costs.filter((c) => {
     const matchDate = !filterDate || c.costDate.startsWith(filterDate)

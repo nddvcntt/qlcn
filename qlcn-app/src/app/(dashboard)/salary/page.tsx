@@ -2,11 +2,25 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input, Select } from "@/components/ui/input"
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { Calculator, Check, Eye } from "lucide-react"
+import { Calculator, Eye } from "lucide-react"
+
+const fetchSalaryData = async (setSalaries: any, setLoading: any) => {
+  try {
+    const res = await fetch("/api/salary")
+    const data = await res.json()
+    if (data.success) {
+      setSalaries(data.data)
+    }
+  } catch (error) {
+    console.error("Error fetching salaries:", error)
+  } finally {
+    setLoading(false)
+  }
+}
 
 interface SalaryRecord {
   id: string
@@ -50,22 +64,8 @@ export default function SalaryPage() {
   const [isCalculating, setIsCalculating] = useState(false)
 
   useEffect(() => {
-    fetchSalaries()
+    fetchSalaryData(setSalaries, setLoading)
   }, [])
-
-  const fetchSalaries = async () => {
-    try {
-      const res = await fetch("/api/salary")
-      const data = await res.json()
-      if (data.success) {
-        setSalaries(data.data)
-      }
-    } catch (error) {
-      console.error("Error fetching salaries:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleCalculate = async () => {
     if (!filterPeriod) {

@@ -136,7 +136,7 @@ export default async function DashboardPage() {
   const data = await getDashboardData(branchId)
   
   // Type assertion for session user with branch
-  const sessionUser = session.user as any
+  const sessionUser = session.user as { role?: string; branch?: { name?: string } }
   const branchName = sessionUser?.branch?.name
 
   return (

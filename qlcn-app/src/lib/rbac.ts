@@ -3,10 +3,10 @@ export type UserRole = "ADMIN" | "BRANCH_DIRECTOR" | "DEPARTMENT_HEAD" | "EMPLOY
 
 // Permission definitions
 const Permissions: Record<string, UserRole[]> = {
-  // Users
+  // Users - BRANCH_DIRECTOR can now delete users in their branch
   "users.read": ["ADMIN", "BRANCH_DIRECTOR"],
   "users.write": ["ADMIN", "BRANCH_DIRECTOR"],
-  "users.delete": ["ADMIN"],
+  "users.delete": ["ADMIN", "BRANCH_DIRECTOR"],
 
   // Products
   "products.read": ["ADMIN", "BRANCH_DIRECTOR", "DEPARTMENT_HEAD", "EMPLOYEE"],

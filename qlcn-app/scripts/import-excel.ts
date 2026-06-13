@@ -86,14 +86,14 @@ async function importSellingPoints(workbook: XLSX.WorkBook, branchId: string): P
     // Tạo default selling points nếu không có sheet
     const defaultPoints = [
       { name: "Xuân La", code: "VTD", group: "GROUP_1", salaryPerShift: 80000 },
-      { name: "Xuân Đỉnh", code: "XL", group: "GROUP_2", salaryPerShift: 75000 },
-      { name: "Xuân Đỉnh Sau", code: "XD_SAU", group: "GROUP_2", salaryPerShift: 75000 },
-      { name: "Cổ Nhuế A", code: "CN_A", group: "GROUP_2", salaryPerShift: 75000 },
-      { name: "Cổ Nhuế B", code: "CN_B", group: "GROUP_2", salaryPerShift: 75000 },
-      { name: "Đông Ngạc", code: "DA", group: "GROUP_2", salaryPerShift: 75000 },
+      { name: "Xuân Đỉnh", code: "XL", group: "GROUP_2", salaryPerShift: 70000 },
+      { name: "Xuân Đỉnh Sau", code: "XD_SAU", group: "GROUP_2", salaryPerShift: 70000 },
+      { name: "Cổ Nhuế A", code: "CN_A", group: "GROUP_2", salaryPerShift: 70000 },
+      { name: "Cổ Nhuế B", code: "CN_B", group: "GROUP_2", salaryPerShift: 70000 },
+      { name: "Đông Ngạc", code: "DA", group: "GROUP_2", salaryPerShift: 70000 },
       { name: "Đông Ngạc A", code: "DA_A", group: "GROUP_1", salaryPerShift: 80000 },
       { name: "Đông Ngạc B", code: "DA_B", group: "GROUP_1", salaryPerShift: 80000 },
-      { name: "Thụy Phương", code: "TP", group: "GROUP_2", salaryPerShift: 75000 },
+      { name: "Thụy Phương", code: "TP", group: "GROUP_2", salaryPerShift: 70000 },
     ]
 
     for (const sp of defaultPoints) {
@@ -128,7 +128,8 @@ async function importSellingPoints(workbook: XLSX.WorkBook, branchId: string): P
       // Xác định group dựa trên tên
       const isFarLocation = code.includes("A") || code.includes("B") || code === "VTD"
       const group = isFarLocation ? "GROUP_1" : "GROUP_2"
-      const salary = group === "GROUP_1" ? 80000 : 75000
+      // GROUP_1: Xa - 80k/ca | GROUP_2: Gần - 70k/ca
+    const salary = group === "GROUP_1" ? 80000 : 70000
 
       await prisma.sellingPoint.upsert({
         where: { code_branchId: { code: String(code), branchId } },

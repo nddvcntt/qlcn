@@ -2,12 +2,26 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input, Select } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table"
 import { formatCurrency } from "@/lib/utils"
-import { Plus, Edit, Trash2, Search } from "lucide-react"
+import { Plus, Edit, Trash2 } from "lucide-react"
+
+const fetchProductsData = async (setProducts: any, setLoading: any) => {
+  try {
+    const res = await fetch("/api/products")
+    const data = await res.json()
+    if (data.success) {
+      setProducts(data.data)
+    }
+  } catch (error) {
+    console.error("Error fetching products:", error)
+  } finally {
+    setLoading(false)
+  }
+}
 
 interface Product {
   id: string
@@ -49,22 +63,8 @@ export default function ProductsPage() {
   })
 
   useEffect(() => {
-    fetchProducts()
+    fetchProductsData(setProducts, setLoading)
   }, [])
-
-  const fetchProducts = async () => {
-    try {
-      const res = await fetch("/api/products")
-      const data = await res.json()
-      if (data.success) {
-        setProducts(data.data)
-      }
-    } catch (error) {
-      console.error("Error fetching products:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const filteredProducts = products.filter((p) => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||

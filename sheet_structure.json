@@ -1,0 +1,159 @@
+{
+  "Nhập Hàng": {
+    "columns": [
+      "Unnamed: 0",
+      "Unnamed: 1",
+      "2026-03-15 00:00:00",
+      "Unnamed: 3",
+      "Unnamed: 4"
+    ],
+    "rows": 29
+  },
+  "Chi Phí": {
+    "columns": [
+      "Unnamed: 0",
+      "Unnamed: 1",
+      "Unnamed: 2",
+      "Unnamed: 3",
+      "Unnamed: 4",
+      "Unnamed: 5",
+      "Unnamed: 6",
+      "Unnamed: 7",
+      "Unnamed: 8",
+      "Unnamed: 9",
+      "Unnamed: 10",
+      "Unnamed: 11"
+    ],
+    "rows": 17
+  },
+  "Giá NhậpXuất": {
+    "columns": [
+      "Giá",
+      "Unnamed: 1",
+      "Unnamed: 2",
+      "Unnamed: 3",
+      "Unnamed: 4"
+    ],
+    "rows": 22
+  },
+  "Lương NV": {
+    "columns": [
+      "Unnamed: 0",
+      "Unnamed: 1",
+      "Unnamed: 2",
+      "Unnamed: 3",
+      "Unnamed: 4",
+      "Unnamed: 5",
+      "Unnamed: 6",
+      "Unnamed: 7",
+      "Unnamed: 8",
+      "Unnamed: 9",
+      "Unnamed: 10",
+      "Unnamed: 11",
+      "Unnamed: 12",
+      "Unnamed: 13",
+      "Unnamed: 14",
+      "Unnamed: 15",
+      "Unnamed: 16",
+      "Unnamed: 17",
+      "Unnamed: 18",
+      "Unnamed: 19",
+      "Unnamed: 20",
+      "Unnamed: 21",
+      "Unnamed: 22",
+      "Unnamed: 23",
+      "Unnamed: 24",
+      "Unnamed: 25",
+      "Unnamed: 26",
+      "Unnamed: 27"
+    ],
+    "rows": 497
+  },
+  "Nhập hàng New": {
+    "columns": [
+      "Ngày Nhập",
+      "Loại hàng",
+      "Số lượng Nhập",
+      "Thành Tiền",
+      "Đơn giá",
+      "Unnamed: 5",
+      "Tặng",
+      "Unnamed: 7",
+      "Loại Hàng",
+      "Tổng Nhập",
+      "Đã Xuất",
+      "Tồn kho tổng",
+      "Trạng Thái",
+      "Unnamed: 13",
+      "Unnamed: 14",
+      "Unnamed: 15",
+      "Unnamed: 16",
+      "Unnamed: 17",
+      "Unnamed: 18",
+      "Unnamed: 19",
+      "Unnamed: 20",
+      "Unnamed: 21",
+      "Unnamed: 22",
+      "Unnamed: 23",
+      "Unnamed: 24",
+      "Unnamed: 25",
+      "Unnamed: 26",
+      "Unnamed: 27",
+      "Unnamed: 28",
+      "Unnamed: 29",
+      "Unnamed: 30",
+      "Unnamed: 31",
+      "Unnamed: 32"
+    ],
+    "rows": 1236
+  },
+  "Nhật ký bán hàng T4": {
+    "columns": [
+      "STT",
+      "Ngày",
+      "Ca Bán",
+      "Điểm bán",
+      "NV Bán",
+      "Loại hàng",
+      "Tồn đầu",
+      "Hàng Bán Mới",
+      "Tồn Cuối",
+      "Hàng Lỗi",
+      "Bán Thực",
+      "Doanh Thu",
+      "Unnamed: 12",
+      "Unnamed: 13",
+      "Unnamed: 14"
+    ],
+    "rows": 948
+  },
+  "Nhật ký bán hàng T3": {
+    "columns": [
+      "STT",
+      "Ngày",
+      "Ca Bán",
+      "Điểm bán",
+      "NV Bán",
+      "Loại hàng",
+      "Tồn đầu",
+      "Hàng Bán Mới",
+      "Tồn Cuối",
+      "Hàng Lỗi",
+      "Bán Thực",
+      "Doanh Thu",
+      "Unnamed: 12",
+      "Unnamed: 13",
+      "Unnamed: 14"
+    ],
+    "rows": 948
+  },
+  "Lương&Thưởng": {
+    "columns": [
+      "STT",
+      "Tên NV",
+      "Trạng thái",
+      "Tổng Ca Làm"
+    ],
+    "rows": 13
+  }
+}

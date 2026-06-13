@@ -2,11 +2,28 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input, Select } from "@/components/ui/input"
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { Plus, Eye, Edit, Trash2, Check } from "lucide-react"
+import { Plus, Check } from "lucide-react"
+
+const fetchProductionData = async (setProductions: any, setSellingPoints: any, setLoading: any) => {
+  try {
+    const [prodRes, spRes] = await Promise.all([
+      fetch("/api/production"),
+      fetch("/api/selling-points"),
+    ])
+    const prodData = await prodRes.json()
+    const spData = await spRes.json()
+    if (prodData.success) setProductions(prodData.data)
+    if (spData.success) setSellingPoints(spData.data)
+  } catch (error) {
+    console.error("Error fetching data:", error)
+  } finally {
+    setLoading(false)
+  }
+}
 
 interface Production {
   id: string
@@ -54,25 +71,8 @@ export default function ProductionPage() {
   })
 
   useEffect(() => {
-    fetchData()
+    fetchProductionData(setProductions, setSellingPoints, setLoading)
   }, [])
-
-  const fetchData = async () => {
-    try {
-      const [prodRes, spRes] = await Promise.all([
-        fetch("/api/production"),
-        fetch("/api/selling-points"),
-      ])
-      const prodData = await prodRes.json()
-      const spData = await spRes.json()
-      if (prodData.success) setProductions(prodData.data)
-      if (spData.success) setSellingPoints(spData.data)
-    } catch (error) {
-      console.error("Error fetching data:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const filteredProductions = productions.filter((p) => {
     const matchDate = !filterDate || p.workDate.startsWith(filterDate)

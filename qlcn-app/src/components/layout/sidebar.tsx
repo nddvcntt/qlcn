@@ -16,6 +16,7 @@ import {
   MapPin,
   Calendar,
   ClipboardList,
+  Users,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { signOut } from "next-auth/react"
@@ -28,6 +29,7 @@ interface SidebarProps {
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Tài Khoản", href: "/users", icon: Users, roles: ["ADMIN", "BRANCH_DIRECTOR"] },
   { name: "Điểm Bán", href: "/selling-points", icon: MapPin },
   { name: "Sản Phẩm", href: "/products", icon: ShoppingCart },
   { name: "Nhập Hàng", href: "/import-orders", icon: PackagePlus },
@@ -68,7 +70,15 @@ export function Sidebar({ userRole, branchName }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {navigation.map((item) => {
+        {navigation
+          .filter((item) => {
+            // If item has role restrictions, check if user has permission
+            if (item.roles) {
+              return item.roles.includes(userRole || "")
+            }
+            return true
+          })
+          .map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
           return (
             <Link

@@ -2,11 +2,25 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input, Select } from "@/components/ui/input"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { Plus, Eye } from "lucide-react"
+
+const fetchImportOrders = async (setOrders: any, setLoading: any) => {
+  try {
+    const res = await fetch("/api/import-orders")
+    const data = await res.json()
+    if (data.success) {
+      setOrders(data.data)
+    }
+  } catch (error) {
+    console.error("Error fetching orders:", error)
+  } finally {
+    setLoading(false)
+  }
+}
 
 interface ImportOrder {
   id: string
@@ -33,22 +47,8 @@ export default function ImportOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<ImportOrder | null>(null)
 
   useEffect(() => {
-    fetchOrders()
+    fetchImportOrders(setOrders, setLoading)
   }, [])
-
-  const fetchOrders = async () => {
-    try {
-      const res = await fetch("/api/import-orders")
-      const data = await res.json()
-      if (data.success) {
-        setOrders(data.data)
-      }
-    } catch (error) {
-      console.error("Error fetching orders:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
     <div className="space-y-6">

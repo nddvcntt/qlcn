@@ -2,11 +2,28 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input, Select } from "@/components/ui/input"
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { Plus, Eye } from "lucide-react"
+
+const fetchExportData = async (setOrders: any, setSellingPoints: any, setLoading: any) => {
+  try {
+    const [ordersRes, spRes] = await Promise.all([
+      fetch("/api/export-orders"),
+      fetch("/api/selling-points"),
+    ])
+    const ordersData = await ordersRes.json()
+    const spData = await spRes.json()
+    if (ordersData.success) setOrders(ordersData.data)
+    if (spData.success) setSellingPoints(spData.data)
+  } catch (error) {
+    console.error("Error fetching data:", error)
+  } finally {
+    setLoading(false)
+  }
+}
 
 interface ExportOrder {
   id: string
@@ -39,25 +56,8 @@ export default function ExportOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<ExportOrder | null>(null)
 
   useEffect(() => {
-    fetchData()
+    fetchExportData(setOrders, setSellingPoints, setLoading)
   }, [])
-
-  const fetchData = async () => {
-    try {
-      const [ordersRes, spRes] = await Promise.all([
-        fetch("/api/export-orders"),
-        fetch("/api/selling-points"),
-      ])
-      const ordersData = await ordersRes.json()
-      const spData = await spRes.json()
-      if (ordersData.success) setOrders(ordersData.data)
-      if (spData.success) setSellingPoints(spData.data)
-    } catch (error) {
-      console.error("Error fetching data:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const filteredOrders = orders.filter((o) => {
     const matchDate = !filterDate || o.exportDate.startsWith(filterDate)

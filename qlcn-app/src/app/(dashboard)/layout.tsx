@@ -3,6 +3,11 @@ import { redirect } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Topbar } from "@/components/layout/topbar"
 
+interface SessionUser {
+  role?: string
+  branch?: { name?: string }
+}
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -14,7 +19,7 @@ export default async function DashboardLayout({
     redirect("/login")
   }
 
-  const sessionUser = session.user as any
+  const sessionUser = session.user as SessionUser
   const branchName = sessionUser?.branch?.name
 
   return (

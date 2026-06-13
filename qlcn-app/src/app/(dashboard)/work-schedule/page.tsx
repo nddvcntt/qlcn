@@ -2,12 +2,29 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input, Select } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table"
 import { formatDate } from "@/lib/utils"
-import { Plus, Check, X, Calendar } from "lucide-react"
+import { Plus, Check, X } from "lucide-react"
+
+const fetchWorkScheduleData = async (setSchedules: any, setSellingPoints: any, setLoading: any) => {
+  try {
+    const [schedulesRes, sellingPointsRes] = await Promise.all([
+      fetch("/api/work-schedule"),
+      fetch("/api/selling-points"),
+    ])
+    const schedulesData = await schedulesRes.json()
+    const sellingPointsData = await sellingPointsRes.json()
+    if (schedulesData.success) setSchedules(schedulesData.data)
+    if (sellingPointsData.success) setSellingPoints(sellingPointsData.data)
+  } catch (error) {
+    console.error("Error fetching data:", error)
+  } finally {
+    setLoading(false)
+  }
+}
 
 interface WorkSchedule {
   id: string
@@ -64,25 +81,8 @@ export default function WorkSchedulePage() {
   })
 
   useEffect(() => {
-    fetchData()
+    fetchWorkScheduleData(setSchedules, setSellingPoints, setLoading)
   }, [])
-
-  const fetchData = async () => {
-    try {
-      const [schedulesRes, sellingPointsRes] = await Promise.all([
-        fetch("/api/work-schedule"),
-        fetch("/api/selling-points"),
-      ])
-      const schedulesData = await schedulesRes.json()
-      const sellingPointsData = await sellingPointsRes.json()
-      if (schedulesData.success) setSchedules(schedulesData.data)
-      if (sellingPointsData.success) setSellingPoints(sellingPointsData.data)
-    } catch (error) {
-      console.error("Error fetching data:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const filteredSchedules = schedules.filter((s) => {
     const matchStatus = !filterStatus || s.status === filterStatus

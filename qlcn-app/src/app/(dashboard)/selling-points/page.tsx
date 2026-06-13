@@ -2,12 +2,26 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input, Select } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table"
 import { formatCurrency } from "@/lib/utils"
-import { Plus, Edit, Trash2, MapPin } from "lucide-react"
+import { Plus, Edit, Trash2 } from "lucide-react"
+
+const fetchSellingPointsData = async (setSellingPoints: any, setLoading: any) => {
+  try {
+    const res = await fetch("/api/selling-points")
+    const data = await res.json()
+    if (data.success) {
+      setSellingPoints(data.data)
+    }
+  } catch (error) {
+    console.error("Error fetching selling points:", error)
+  } finally {
+    setLoading(false)
+  }
+}
 
 interface SellingPoint {
   id: string
@@ -21,8 +35,8 @@ interface SellingPoint {
 }
 
 const GROUPS = [
-  { value: "GROUP_1", label: "Nhóm 1 (80,000đ/ca)" },
-  { value: "GROUP_2", label: "Nhóm 2 (75,000đ/ca)" },
+  { value: "GROUP_1", label: "Nhóm 1 - Xa (80,000đ/ca)" },
+  { value: "GROUP_2", label: "Nhóm 2 - Gần (70,000đ/ca)" },
 ]
 
 export default function SellingPointsPage() {
@@ -37,26 +51,12 @@ export default function SellingPointsPage() {
     code: "",
     address: "",
     group: "GROUP_2",
-    salaryPerShift: "75000",
+    salaryPerShift: "70000",
   })
 
   useEffect(() => {
-    fetchSellingPoints()
+    fetchSellingPointsData(setSellingPoints, setLoading)
   }, [])
-
-  const fetchSellingPoints = async () => {
-    try {
-      const res = await fetch("/api/selling-points")
-      const data = await res.json()
-      if (data.success) {
-        setSellingPoints(data.data)
-      }
-    } catch (error) {
-      console.error("Error fetching selling points:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const filteredItems = sellingPoints.filter((sp) => {
     const matchSearch = sp.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -69,7 +69,7 @@ export default function SellingPointsPage() {
     setFormData({
       ...formData,
       group,
-      salaryPerShift: group === "GROUP_1" ? "80000" : "75000",
+      salaryPerShift: group === "GROUP_1" ? "80000" : "70000",
     })
   }
 
@@ -131,7 +131,7 @@ export default function SellingPointsPage() {
       code: "",
       address: "",
       group: "GROUP_2",
-      salaryPerShift: "75000",
+      salaryPerShift: "70000",
     })
   }
 

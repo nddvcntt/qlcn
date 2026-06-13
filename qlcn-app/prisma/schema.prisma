@@ -77,8 +77,8 @@ model SellingPoint {
   name           String
   code           String
   address        String?
-  group          String   @default("GROUP_2")  // GROUP_1, GROUP_2
-  salaryPerShift Float    @default(75000)  // 80000 or 75000
+  group          String   @default("GROUP_2")  // GROUP_1: Xa (80k), GROUP_2: Gần (70k)
+  salaryPerShift Float    @default(70000)  // 80000 (xa) or 70000 (gần)
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
