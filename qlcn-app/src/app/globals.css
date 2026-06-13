@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Primary Colors */
+  --color-primary: #5D4037;
+  --color-primary-light: #8D6E63;
+  --color-primary-dark: #3E2723;
+
+  /* Secondary Colors */
+  --color-secondary: #F9A825;
+  --color-secondary-light: #FFF8E1;
+
+  /* Background - Light Mode */
+  --color-background: #FFFDF7;
+  --color-surface: #FFFFFF;
+
+  /* Status Colors */
+  --color-success: #43A047;
+  --color-danger: #E53935;
+  --color-warning: #FB8C00;
+
+  /* Border */
+  --color-border: #D7CCC8;
+
+  /* Text */
+  --color-text-primary: #3E2723;
+  --color-text-secondary: #795548;
+
+  /* Font */
+  --font-sans: "Inter", "Noto Sans", sans-serif;
+  --font-mono: "JetBrains Mono", "Roboto Mono", monospace;
+}
+
+/* Dark Mode Theme */
+.dark {
+  --color-primary: #A1887F;
+  --color-primary-light: #D7CCC8;
+  --color-primary-dark: #5D4037;
+
+  --color-secondary: #FFB300;
+  --color-secondary-light: #3E2723;
+
+  --color-background: #1A1A1A;
+  --color-surface: #2D2D2D;
+
+  --color-success: #66BB6A;
+  --color-danger: #EF5350;
+  --color-warning: #FFA726;
+
+  --color-border: #424242;
+
+  --color-text-primary: #F5F5F5;
+  --color-text-secondary: #BDBDBD;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-text-primary font-sans;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  }
+  
+  /* Smooth transitions for all elements */
+  * {
+    transition-property: background-color, border-color, color;
+    transition-duration: 150ms;
+    transition-timing-function: ease-in-out;
+  }
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #2D2D2D;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #5D4037;
+  border-radius: 5px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #8D6E63;
+}

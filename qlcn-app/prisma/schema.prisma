@@ -1,0 +1,443 @@
+// QLCN - Hệ Thống Quản Lý Cơm Nắm
+// Database Schema - SQLite (Development)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ORGANIZATION ====================
+
+model Organization {
+  id        String    @id @default(uuid())
+  name      String
+  logo      String?
+  address   String?
+  phone     String?
+  taxCode   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  branches Branch[]
+}
+
+// ==================== BRANCH ====================
+
+model Branch {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  code           String       @unique
+  address        String?
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  departments    Department[]
+  sellingPoints  SellingPoint[]
+  users          User[]
+  products       Product[]
+  importOrders   ImportOrder[]
+  exportOrders  ExportOrder[]
+  inventory      Inventory[]
+  production     DailyProduction[]
+  salaryRecords  SalaryRecord[]
+  costRecords    CostRecord[]
+  workSchedules  WorkSchedule[]
+}
+
+// ==================== DEPARTMENTS ====================
+
+model Department {
+  id        String   @id @default(uuid())
+  branchId  String
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  name      String
+  code      String
+  managerId String?
+  manager   User?    @relation("DepartmentManager", fields: [managerId], references: [id])
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  users User[]
+}
+
+// ==================== SELLING POINTS ====================
+
+model SellingPoint {
+  id             String   @id @default(uuid())
+  branchId       String
+  branch         Branch   @relation(fields: [branchId], references: [id])
+  name           String
+  code           String
+  address        String?
+  group          String   @default("GROUP_2")  // GROUP_1, GROUP_2
+  salaryPerShift Float    @default(75000)  // 80000 or 75000
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  workSchedules  WorkSchedule[]
+  productions    DailyProduction[]
+  exportOrders   ExportOrder[]
+  
+  @@unique([branchId, code])
+}
+
+// ==================== USERS ====================
+
+model User {
+  id           String    @id @default(uuid())
+  username     String    @unique
+  password     String
+  fullName     String
+  email        String    @unique
+  phone        String?
+  role         String    // ADMIN, BRANCH_DIRECTOR, DEPARTMENT_HEAD, EMPLOYEE
+  branchId     String?
+  branch       Branch?   @relation(fields: [branchId], references: [id])
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  isActive     Boolean   @default(true)
+  startDate    DateTime? @default(now())
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  // Departments
+  managedDepartments Department[] @relation("DepartmentManager")
+  
+  // Import/Export
+  createdImportOrders    ImportOrder[]      @relation("ImportOrderCreator")
+  createdExportOrders    ExportOrder[]      @relation("ExportOrderCreator")
+  
+  // Production
+  productions            DailyProduction[]  @relation("EmployeeProduction")
+  approvedProductions    DailyProduction[]  @relation("ProductionApprover")
+  
+  // Salary
+  salaryRecords          SalaryRecord[]    @relation("EmployeeSalary")
+  approvedByBranch       SalaryRecord[]    @relation("SalaryApproverBranch")
+  approvedByOrg          SalaryRecord[]    @relation("SalaryApproverOrg")
+  salaryAdjustments      SalaryAdjustment[]
+  
+  // Work Schedule
+  workSchedules          WorkSchedule[]    @relation("ScheduleEmployee")
+  approvedWorkSchedules  WorkSchedule[]    @relation("ScheduleApprover")
+  
+  // Costs
+  costRecords            CostRecord[]
+  
+  // Audit
+  auditLogs              AuditLog[]
+  priceHistory           PriceHistory[]
+  
+  @@index([branchId])
+}
+
+// ==================== PRODUCTS ====================
+
+model Product {
+  id           String   @id @default(uuid())
+  branchId     String?
+  branch       Branch?  @relation(fields: [branchId], references: [id])
+  name         String
+  code         String   @unique
+  costPrice    Float
+  sellingPrice Float
+  unit         String   @default("nắm")
+  image        String?
+  type         String   @default("COM_NAM")  // COM_NAM, WATER, OTHER
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Bonus settings for COM_NAM
+  bonusThreshold   Int     @default(50)   // >= 50 suất để được thưởng
+  bonusPerUnit     Float   @default(500)  // 500đ/suất
+  
+  // Commission for WATER
+  commissionRate   Float   @default(0)   // % hoa hồng
+  
+  importItems   ImportOrderItem[]
+  exportItems   ExportOrderItem[]
+  inventory     Inventory[]
+  priceHistory  PriceHistory[]
+}
+
+// ==================== IMPORT ORDERS ====================
+
+model ImportOrder {
+  id           String   @id @default(uuid())
+  branchId     String
+  branch       Branch   @relation(fields: [branchId], references: [id])
+  importDate   DateTime
+  totalAmount Float    @default(0)
+  note         String?
+  createdById  String
+  createdBy    User     @relation("ImportOrderCreator", fields: [createdById], references: [id])
+  status       String   @default("DRAFT")  // DRAFT, APPROVED, CANCELLED
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  items ImportOrderItem[]
+  
+  @@index([branchId, importDate])
+}
+
+model ImportOrderItem {
+  id             String      @id @default(uuid())
+  importOrderId  String
+  importOrder    ImportOrder @relation(fields: [importOrderId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product     @relation(fields: [productId], references: [id])
+  quantity       Int
+  giftedQuantity Int         @default(0)
+  unitPrice      Float
+  totalAmount    Float
+}
+
+// ==================== EXPORT ORDERS ====================
+
+model ExportOrder {
+  id             String   @id @default(uuid())
+  branchId       String
+  branch         Branch   @relation(fields: [branchId], references: [id])
+  sellingPointId String
+  sellingPoint   SellingPoint @relation(fields: [sellingPointId], references: [id])
+  exportDate     DateTime
+  totalRevenue  Float    @default(0)
+  note           String?
+  createdById    String
+  createdBy      User     @relation("ExportOrderCreator", fields: [createdById], references: [id])
+  status         String   @default("DRAFT")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  items ExportOrderItem[]
+  
+  @@index([branchId, sellingPointId, exportDate])
+}
+
+model ExportOrderItem {
+  id             String       @id @default(uuid())
+  exportOrderId  String
+  exportOrder    ExportOrder  @relation(fields: [exportOrderId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product      @relation(fields: [productId], references: [id])
+  quantity       Int
+  giftedQuantity Int          @default(0)
+  unitPrice      Float
+  totalAmount    Float
+}
+
+// ==================== INVENTORY ====================
+
+model Inventory {
+  id             String   @id @default(uuid())
+  branchId       String
+  branch         Branch   @relation(fields: [branchId], references: [id])
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id])
+  date           DateTime
+  openingStock   Int      @default(0)
+  importQuantity Int      @default(0)
+  exportQuantity Int      @default(0)
+  giftedQuantity Int      @default(0)
+  closingStock   Int
+  updatedAt      DateTime @updatedAt
+  
+  @@unique([branchId, productId, date])
+  @@index([branchId, date])
+}
+
+// ==================== WORK SCHEDULE ====================
+
+model WorkSchedule {
+  id             String   @id @default(uuid())
+  employeeId     String
+  employee       User     @relation("ScheduleEmployee", fields: [employeeId], references: [id])
+  branchId       String
+  branch         Branch   @relation(fields: [branchId], references: [id])
+  sellingPointId String
+  sellingPoint   SellingPoint @relation(fields: [sellingPointId], references: [id])
+  workDate       DateTime
+  shift          String   // SANG, CHIEU
+  status         String   @default("PENDING")  // PENDING, APPROVED, REJECTED, CANCELLED
+  approvedById   String?
+  approvedBy     User?    @relation("ScheduleApprover", fields: [approvedById], references: [id])
+  note           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  production     DailyProduction?
+  
+  @@unique([employeeId, workDate, shift])
+  @@index([branchId, workDate])
+  @@index([sellingPointId, workDate])
+}
+
+// ==================== DAILY PRODUCTION ====================
+
+model DailyProduction {
+  id             String   @id @default(uuid())
+  employeeId     String
+  employee       User     @relation("EmployeeProduction", fields: [employeeId], references: [id])
+  branchId       String
+  branch         Branch   @relation(fields: [branchId], references: [id])
+  sellingPointId String
+  sellingPoint   SellingPoint @relation(fields: [sellingPointId], references: [id])
+  workDate       DateTime
+  shift          String   // SANG, CHIEU
+  quantity       Int      @default(0)  // Số suất cơm nắm bán được
+  
+  // Trạng thái nhân viên theo ngày làm việc
+  employeeStatus String   @default("OFFICIAL")  // PROBATION, TRIAL, OFFICIAL
+  
+  // Tiền lương theo ca
+  baseSalary     Float    // Lương cơ bản = salaryPerShift của điểm bán
+  bonusAmount    Float    @default(0)  // Thưởng nếu bán >= 50 suất
+  commissionAmount Float  @default(0)  // Hoa hồng nước
+  totalSalary    Float    // Tổng = base + bonus + commission
+  
+  // Liên kết work schedule
+  workScheduleId String?  @unique
+  workSchedule   WorkSchedule? @relation(fields: [workScheduleId], references: [id])
+  
+  isApproved     Boolean  @default(false)
+  approvedById   String?
+  approvedBy     User?    @relation("ProductionApprover", fields: [approvedById], references: [id])
+  
+  note           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@index([branchId, workDate])
+  @@index([employeeId, workDate])
+}
+
+// ==================== SALARY ====================
+
+model SalaryRecord {
+  id             String   @id @default(uuid())
+  employeeId     String
+  employee       User     @relation("EmployeeSalary", fields: [employeeId], references: [id])
+  branchId       String
+  branch         Branch   @relation(fields: [branchId], references: [id])
+  
+  periodType     String   // WEEKLY, MONTHLY
+  periodStart   DateTime
+  periodEnd     DateTime
+  
+  totalWorkDays  Int      @default(0)
+  totalShifts    Int      @default(0)
+  totalQuantity Int      @default(0)
+  
+  baseSalary     Float    @default(0)
+  bonusAmount    Float    @default(0)
+  commissionAmount Float  @default(0)
+  allowances     Float    @default(0)
+  deductions     Float    @default(0)
+  advanceAmount  Float    @default(0)
+  
+  grossSalary    Float
+  netSalary      Float
+  
+  status         String   @default("PENDING")  // PENDING, APPROVED_BY_BRANCH, APPROVED_BY_ORG, PAID
+  approvedByBranchId String?
+  approvedByBranch  User?  @relation("SalaryApproverBranch", fields: [approvedByBranchId], references: [id])
+  approvedByOrgId   String?
+  approvedByOrg      User?  @relation("SalaryApproverOrg", fields: [approvedByOrgId], references: [id])
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  adjustments SalaryAdjustment[]
+  
+  @@unique([employeeId, periodStart, periodEnd])
+  @@index([branchId, periodStart])
+}
+
+model SalaryAdjustment {
+  id             String       @id @default(uuid())
+  salaryRecordId String
+  salaryRecord   SalaryRecord @relation(fields: [salaryRecordId], references: [id], onDelete: Cascade)
+  type           String       // BONUS, DEDUCTION, ALLOWANCE, ADJUSTMENT
+  amount         Float
+  reason         String?
+  createdById    String
+  createdBy      User         @relation(fields: [createdById], references: [id])
+  createdAt      DateTime     @default(now())
+}
+
+// ==================== COSTS ====================
+
+model CostCategory {
+  id               String   @id @default(uuid())
+  name             String
+  type             String   // FIXED, VARIABLE
+  unit             String
+  defaultUnitPrice Float    @default(0)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  costRecords CostRecord[]
+}
+
+model CostRecord {
+  id          String       @id @default(uuid())
+  branchId    String
+  branch      Branch       @relation(fields: [branchId], references: [id])
+  categoryId  String
+  category    CostCategory @relation(fields: [categoryId], references: [id])
+  costDate    DateTime
+  quantity    Int
+  unitPrice   Float
+  totalAmount Float
+  note        String?
+  createdById String
+  createdBy   User         @relation(fields: [createdById], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  @@index([branchId, costDate])
+}
+
+// ==================== AUDIT & PRICE HISTORY ====================
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  action     String
+  resource   String
+  resourceId String?
+  oldValue   String?
+  newValue   String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  
+  @@index([userId, createdAt])
+  @@index([resource, resourceId])
+}
+
+model PriceHistory {
+  id            String   @id @default(uuid())
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id])
+  costPrice     Float
+  sellingPrice  Float
+  changedById   String
+  changedBy     User     @relation(fields: [changedById], references: [id])
+  changedAt     DateTime @default(now())
+  
+  @@index([productId, changedAt])
+}
