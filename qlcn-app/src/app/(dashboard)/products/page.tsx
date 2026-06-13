@@ -91,7 +91,7 @@ export default function ProductsPage() {
         setIsDialogOpen(false)
         setEditingProduct(null)
         resetForm()
-        fetchProducts()
+        fetchProductsData(setProducts, setLoading)
       } else {
         alert(data.error?.message || "Có lỗi xảy ra")
       }
@@ -123,7 +123,7 @@ export default function ProductsPage() {
       const res = await fetch(`/api/products?id=${id}`, { method: "DELETE" })
       const data = await res.json()
       if (data.success) {
-        fetchProducts()
+        fetchProductsData(setProducts, setLoading)
       }
     } catch (error) {
       console.error("Error deleting product:", error)

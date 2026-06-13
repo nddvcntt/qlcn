@@ -151,24 +151,25 @@
 
 ### Testing & Data
 
-#### TASK_014: E2E Tests ✅ IN PROGRESS
+#### TASK_014: E2E Tests
 **Agent**: AGENT_TESTING
 **Status**: [ ] Pending
 **Description**: Playwright E2E tests
 **Deliverables**:
-- [ ] Test login flow
-- [ ] Test CRUD operations
-- [ ] Test salary calculation
-- [ ] Test dashboard
+- [x] Test file `e2e/full-system.spec.ts`
+- [x] Test login flow (✅ pass)
+- [x] Test dashboard navigation (✅ pass)
+- [x] Test products CRUD (✅ pass)
+- [ ] Fix remaining selectors for other modules
 
-#### TASK_015: Excel Import ✅ IN PROGRESS
+#### TASK_015: Excel Import ✅ COMPLETED
 **Agent**: AGENT_DATA
-**Status**: [ ] Pending
+**Status**: [x] Completed
 **Description**: Import dữ liệu từ Excel
 **Deliverables**:
-- [ ] Excel reader script
-- [ ] Data mapping functions
-- [ ] Batch import
+- [x] Excel reader script (`src/scripts/importExcel.ts`)
+- [x] Data mapping functions
+- [x] Batch import to DB
 
 ---
 
@@ -203,7 +204,7 @@ TASK_001 (Setup) ✅
                          TASK_013 (Docker) ✅
                               │
                          TASK_014 (E2E) 🔄
-                         TASK_015 (Excel) 🔄
+                         TASK_015 (Excel) ✅
 ```
 
 ---
@@ -231,10 +232,17 @@ TASK_001 (Setup) ✅
 
 ### Build Status
 ```
-✓ npm run build - SUCCESS
+✓ npm run build - SUCCESS (13.1s)
+✓ Compiled successfully
 ✓ 26 routes generated
-✓ TypeScript compile - SUCCESS
 ```
+
+### Recent Optimizations (2026-06-13)
+- Gỡ transition toàn cục trong globals.css (tăng FPS)
+- Sửa lỗi layout Dashboard (ml-[240px] thừa)
+- Sửa React Hook trong ThemeProvider
+- Rename middleware.ts → proxy.ts (Next.js 16.2 convention)
+- Fix user delete self-protection logic
 
 ---
 

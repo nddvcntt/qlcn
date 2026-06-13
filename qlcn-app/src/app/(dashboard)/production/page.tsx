@@ -100,7 +100,7 @@ export default function ProductionPage() {
       if (data.success) {
         setIsDialogOpen(false)
         setFormData({ sellingPointId: "", workDate: "", shift: "SANG", quantity: "" })
-        fetchData()
+        fetchProductionData(setProductions, setSellingPoints, setLoading)
       }
     } catch (error) {
       console.error("Error:", error)
@@ -113,7 +113,7 @@ export default function ProductionPage() {
         method: "PUT",
       })
       const data = await res.json()
-      if (data.success) fetchData()
+      if (data.success) fetchProductionData(setProductions, setSellingPoints, setLoading)
     } catch (error) {
       console.error("Error:", error)
     }

@@ -9,8 +9,8 @@ const TEST_USER = {
 // Helper function for login
 async function login(page: any) {
   await page.goto("/login")
-  await page.fill('input[name="username"]', TEST_USER.username)
-  await page.fill('input[name="password"]', TEST_USER.password)
+  await page.fill('#username', TEST_USER.username)
+  await page.fill('#password', TEST_USER.password)
   await page.click('button[type="submit"]')
   await page.waitForURL("**/dashboard")
 }
@@ -20,22 +20,22 @@ async function login(page: any) {
 test.describe("Authentication", () => {
   test("should show login page", async ({ page }) => {
     await page.goto("/login")
-    await expect(page.locator("h1")).toContainText("Đăng nhập")
+    await expect(page.locator("text=Hệ Thống QLCN")).toBeVisible()
   })
 
   test("should login successfully with valid credentials", async ({ page }) => {
     await page.goto("/login")
-    await page.fill('input[name="username"]', TEST_USER.username)
-    await page.fill('input[name="password"]', TEST_USER.password)
+    await page.fill('#username', TEST_USER.username)
+    await page.fill('#password', TEST_USER.password)
     await page.click('button[type="submit"]')
     await page.waitForURL("**/dashboard", { timeout: 30000 })
-    await expect(page.locator("h1")).toContainText("Dashboard")
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
   })
 
   test("should show error with invalid credentials", async ({ page }) => {
     await page.goto("/login")
-    await page.fill('input[name="username"]', "invalid")
-    await page.fill('input[name="password"]', "invalid")
+    await page.fill('#username', "invalid")
+    await page.fill('#password', "invalid")
     await page.click('button[type="submit"]')
     await expect(page.locator("text=Sai")).toBeVisible({ timeout: 5000 })
   })
@@ -54,8 +54,7 @@ test.describe("Dashboard", () => {
   })
 
   test("should display dashboard page", async ({ page }) => {
-    await page.waitForSelector("h1")
-    await expect(page.locator("h1")).toContainText("Dashboard")
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
   })
 
   test("should show stats cards", async ({ page }) => {
@@ -72,7 +71,7 @@ test.describe("Dashboard", () => {
   test("should navigate to other pages via sidebar", async ({ page }) => {
     // Click on Sản Phẩm
     await page.click('a[href="/products"]')
-    await expect(page.locator("h1")).toContainText("Sản Phẩm")
+    await expect(page.getByRole('heading', { name: 'Danh Mục Sản Phẩm' })).toBeVisible()
   })
 })
 
@@ -85,7 +84,7 @@ test.describe("Products Module", () => {
   })
 
   test("should display products page", async ({ page }) => {
-    await expect(page.locator("h1")).toContainText("Danh Mục Sản Phẩm")
+    await expect(page.getByRole('heading', { name: 'Danh Mục Sản Phẩm' })).toBeVisible()
   })
 
   test("should show products table", async ({ page }) => {

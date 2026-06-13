@@ -90,7 +90,7 @@ export default function SellingPointsPage() {
         setIsDialogOpen(false)
         setEditingItem(null)
         resetForm()
-        fetchSellingPoints()
+        fetchSellingPointsData(setSellingPoints, setLoading)
       } else {
         alert(data.error?.message || "Có lỗi xảy ra")
       }
@@ -118,7 +118,7 @@ export default function SellingPointsPage() {
       const res = await fetch(`/api/selling-points?id=${id}`, { method: "DELETE" })
       const data = await res.json()
       if (data.success) {
-        fetchSellingPoints()
+        fetchSellingPointsData(setSellingPoints, setLoading)
       }
     } catch (error) {
       console.error("Error deleting:", error)

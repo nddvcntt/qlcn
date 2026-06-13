@@ -110,7 +110,7 @@ export default function WorkSchedulePage() {
       if (data.success) {
         setIsDialogOpen(false)
         setFormData({ sellingPointId: "", workDate: "", shift: "SANG", note: "" })
-        fetchData()
+        fetchWorkScheduleData(setSchedules, setSellingPoints, setLoading)
       } else {
         alert(data.error?.message || "Có lỗi xảy ra")
       }
@@ -132,7 +132,7 @@ export default function WorkSchedulePage() {
         }),
       })
       const data = await res.json()
-      if (data.success) fetchData()
+      if (data.success) fetchWorkScheduleData(setSchedules, setSellingPoints, setLoading)
     } catch (error) {
       console.error("Error:", error)
     }
@@ -150,7 +150,7 @@ export default function WorkSchedulePage() {
         }),
       })
       const data = await res.json()
-      if (data.success) fetchData()
+      if (data.success) fetchWorkScheduleData(setSchedules, setSellingPoints, setLoading)
     } catch (error) {
       console.error("Error:", error)
     }

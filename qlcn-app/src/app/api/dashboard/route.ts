@@ -1,13 +1,31 @@
 import { prisma } from "@/lib/prisma"
 import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
 
 // GET /api/dashboard - Get dashboard data
 export async function GET(request: NextRequest) {
   try {
+    const session = await auth()
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: { code: "UNAUTHORIZED", message: "Chưa đăng nhập" } },
+        { status: 401 }
+      )
+    }
+
+    const userRole = (session.user as any)?.role
+    const userBranchId = (session.user as any)?.branchId
+
     const { searchParams } = new URL(request.url)
-    const branchId = searchParams.get("branchId")
+    let branchId = searchParams.get("branchId")
     const dateFrom = searchParams.get("dateFrom")
     const dateTo = searchParams.get("dateTo")
+
+    // Role-based filtering
+    if (userRole !== "ADMIN") {
+      // Non-admin: force own branch
+      branchId = userBranchId
+    }
 
     // Default to last 14 days
     const endDate = dateTo ? new Date(dateTo) : new Date()
@@ -33,7 +51,7 @@ export async function GET(request: NextRequest) {
 
     // Calculate daily revenue
     const dailyData: Record<string, { revenue: number; cost: number; profit: number; orders: number }> = {}
-    
+
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
       const dateKey = d.toISOString().split("T")[0]
       dailyData[dateKey] = { revenue: 0, cost: 0, profit: 0, orders: 0 }

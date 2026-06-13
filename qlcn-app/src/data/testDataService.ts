@@ -3,7 +3,7 @@ import testData from './testData.json'
 export interface SalesRecord {
   STT: number
   Ngày: string
-  Ca Bán: string
+  'Ca Bán': string
   'Điểm bán': string
   'NV Bán': string
   'Loại hàng': string

@@ -28,8 +28,8 @@ export default async function DashboardLayout({
         userRole={session.user?.role} 
         branchName={branchName} 
       />
-      <div className="flex-1 flex flex-col overflow-hidden ml-[240px]">
-        <Topbar user={session.user} />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Topbar user={session.user} branchName={branchName} />
         <main className="flex-1 overflow-auto p-6">
           {children}
         </main>

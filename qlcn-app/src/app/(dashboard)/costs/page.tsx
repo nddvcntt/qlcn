@@ -97,7 +97,7 @@ export default function CostsPage() {
       if (data.success) {
         setIsDialogOpen(false)
         setFormData({ categoryId: "", costDate: "", quantity: "", unitPrice: "", note: "" })
-        fetchData()
+        fetchData(setCosts, setCategories, setLoading)
       }
     } catch (error) {
       console.error("Error:", error)
@@ -108,7 +108,7 @@ export default function CostsPage() {
     if (!confirm("Bạn có chắc muốn xóa?")) return
     try {
       await fetch(`/api/costs?id=${id}`, { method: "DELETE" })
-      fetchData()
+      fetchData(setCosts, setCategories, setLoading)
     } catch (error) {
       console.error("Error:", error)
     }

@@ -1,16 +1,12 @@
 import { prisma } from "@/lib/prisma"
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
+import { auth } from "@/lib/auth"
 
 // GET /api/users - Get all users (with branch filter for non-admin)
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const branchId = searchParams.get("branchId")
-    const role = searchParams.get("role")
-    const isActive = searchParams.get("isActive")
-
-    const session = await import("@/lib/auth").then(m => m.auth())
+    const session = await auth()
     const userRole = session?.user?.role as string
 
     if (!session) {
@@ -20,22 +16,42 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    const { searchParams } = new URL(request.url)
+    const branchId = searchParams.get("branchId")
+    const role = searchParams.get("role")
+    const isActive = searchParams.get("isActive")
+    const search = searchParams.get("search")
+    const page = parseInt(searchParams.get("page") || "1")
+    const limit = parseInt(searchParams.get("limit") || "20")
+
     // Build where clause
     const where: any = {}
-    
+
     // Non-admin users can only see users in their branch
     if (userRole !== "ADMIN") {
       if (session.user?.branchId) {
         where.branchId = session.user.branchId
       } else {
-        return NextResponse.json({ success: true, data: [] })
+        return NextResponse.json({ success: true, data: [], pagination: { page: 1, limit, total: 0, totalPages: 0 } })
       }
     } else if (branchId) {
       where.branchId = branchId
     }
 
     if (role) where.role = role
-    if (isActive !== null) where.isActive = isActive === "true"
+    if (isActive !== null && isActive !== undefined) where.isActive = isActive === "true"
+
+    // Search filter
+    if (search) {
+      where.OR = [
+        { fullName: { contains: search, mode: "insensitive" } },
+        { username: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+      ]
+    }
+
+    // Get total count for pagination
+    const total = await prisma.user.count({ where })
 
     const users = await prisma.user.findMany({
       where,
@@ -44,12 +60,23 @@ export async function GET(request: NextRequest) {
         department: { select: { id: true, name: true, code: true } },
       },
       orderBy: [{ role: "asc" }, { fullName: "asc" }],
+      skip: (page - 1) * limit,
+      take: limit,
     })
 
     // Remove password from response
     const sanitizedUsers = users.map(({ password, ...user }) => user)
 
-    return NextResponse.json({ success: true, data: sanitizedUsers })
+    return NextResponse.json({
+      success: true,
+      data: sanitizedUsers,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    })
   } catch (error) {
     console.error("Get users error:", error)
     return NextResponse.json(
@@ -62,7 +89,7 @@ export async function GET(request: NextRequest) {
 // POST /api/users - Create new user
 export async function POST(request: NextRequest) {
   try {
-    const session = await import("@/lib/auth").then(m => m.auth())
+    const session = await auth()
     const userRole = session?.user?.role as string
 
     if (!session) {
@@ -155,7 +182,7 @@ export async function POST(request: NextRequest) {
 // PUT /api/users - Update user
 export async function PUT(request: NextRequest) {
   try {
-    const session = await import("@/lib/auth").then(m => m.auth())
+    const session = await auth()
     const userRole = session?.user?.role as string
 
     if (!session) {
@@ -265,7 +292,7 @@ export async function PUT(request: NextRequest) {
 // DELETE /api/users - Delete user
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await import("@/lib/auth").then(m => m.auth())
+    const session = await auth()
     const userRole = session?.user?.role as string
 
     if (!session) {

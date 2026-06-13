@@ -1,41 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input, Select } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table"
+import { Skeleton } from "@/components/ui/skeleton"
 import { formatDate } from "@/lib/utils"
-import { Plus, Edit, Trash2 } from "lucide-react"
-
-const fetchUsersData = async (setUsers: any, setLoading: any) => {
-  try {
-    const params = new URLSearchParams()
-    params.set("isActive", "true")
-    const res = await fetch(`/api/users?${params.toString()}`)
-    const data = await res.json()
-    if (data.success) {
-      setUsers(data.data)
-    }
-  } catch (error) {
-    console.error("Error fetching users:", error)
-  } finally {
-    setLoading(false)
-  }
-}
-
-const fetchCurrentUserSession = async (setCurrentUserRole: any) => {
-  try {
-    const res = await fetch("/api/auth/session")
-    const data = await res.json()
-    if (data?.user?.role) {
-      setCurrentUserRole(data.user.role)
-    }
-  } catch (error) {
-    console.error("Error fetching session:", error)
-  }
-}
+import { Plus, Edit, Trash2, Search, ChevronLeft, ChevronRight, UserX } from "lucide-react"
+import { useToast } from "@/components/ui/toast"
+import { Badge } from "@/components/ui/badge"
 
 interface User {
   id: string
@@ -53,33 +29,51 @@ interface User {
   createdAt: string
 }
 
-const ROLE_LABELS = {
-  ADMIN: "Tổng Giám Đốc",
-  BRANCH_DIRECTOR: "Giám Đốc CN",
+interface PaginationInfo {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: "Tổng GD",
+  BRANCH_DIRECTOR: "GD CN",
   DEPARTMENT_HEAD: "Trưởng Phòng",
   EMPLOYEE: "Nhân Viên",
 }
 
-const ROLE_OPTIONS = [
-  { value: "DEPARTMENT_HEAD", label: "Trưởng Phòng" },
-  { value: "EMPLOYEE", label: "Nhân Viên" },
-]
+const ROLE_COLORS: Record<string, string> = {
+  ADMIN: "bg-purple-100 text-purple-700",
+  BRANCH_DIRECTOR: "bg-blue-100 text-blue-700",
+  DEPARTMENT_HEAD: "bg-amber-100 text-amber-700",
+  EMPLOYEE: "bg-green-100 text-green-700",
+}
 
-const STATUS_OPTIONS = [
-  { value: "true", label: "Đang hoạt động" },
-  { value: "false", label: "Đã khóa" },
-]
+const PAGE_SIZE = 20
 
 export default function UsersPage() {
+  const { data: session } = useSession()
+  const toast = useToast()
+  const currentUserRole = session?.user?.role || ""
+  const currentUserId = session?.user?.id || ""
+
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [filterRole, setFilterRole] = useState("")
   const [filterStatus, setFilterStatus] = useState("true")
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    page: 1,
+    limit: PAGE_SIZE,
+    total: 0,
+    totalPages: 0,
+  })
+
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [currentUserRole, setCurrentUserRole] = useState<string>("")
 
   const [formData, setFormData] = useState({
     username: "",
@@ -92,22 +86,61 @@ export default function UsersPage() {
     startDate: "",
   })
 
+  // Debounce search input
   useEffect(() => {
-    fetchUsersData(setUsers, setLoading)
-    fetchCurrentUserSession(setCurrentUserRole)
-  }, [])
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search)
+      setPagination(p => ({ ...p, page: 1 }))
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  // Fetch users with server-side filtering & pagination
+  const fetchUsers = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      params.set("page", pagination.page.toString())
+      params.set("limit", PAGE_SIZE.toString())
+      if (debouncedSearch) params.set("search", debouncedSearch)
+      if (filterRole) params.set("role", filterRole)
+      if (filterStatus) params.set("isActive", filterStatus)
+
+      const res = await fetch(`/api/users?${params.toString()}`)
+      const data = await res.json()
+      if (data.success) {
+        setUsers(data.data)
+        if (data.pagination) {
+          setPagination(prev => ({ ...prev, ...data.pagination }))
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error)
+      toast.error("Không thể tải danh sách tài khoản")
+    } finally {
+      setLoading(false)
+    }
+  }, [pagination.page, debouncedSearch, filterRole, filterStatus])
 
   useEffect(() => {
-    fetchUsers()
-  }, [filterRole, filterStatus])
+    const handle = setTimeout(() => {
+      void fetchUsers()
+    }, 0)
+    return () => clearTimeout(handle)
+  }, [fetchUsers])
 
-  const filteredUsers = users.filter((u) => {
-    const matchSearch =
-      u.fullName.toLowerCase().includes(search.toLowerCase()) ||
-      u.username.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase())
-    return matchSearch
-  })
+  // Role options based on current user's role
+  const roleOptions = currentUserRole === "ADMIN"
+    ? [
+        { value: "ADMIN", label: "Tổng Giám Đốc" },
+        { value: "BRANCH_DIRECTOR", label: "Giám Đốc CN" },
+        { value: "DEPARTMENT_HEAD", label: "Trưởng Phòng" },
+        { value: "EMPLOYEE", label: "Nhân Viên" },
+      ]
+    : [
+        { value: "DEPARTMENT_HEAD", label: "Trưởng Phòng" },
+        { value: "EMPLOYEE", label: "Nhân Viên" },
+      ]
 
   const resetForm = () => {
     setFormData({
@@ -144,7 +177,12 @@ export default function UsersPage() {
 
     try {
       const method = editingUser ? "PUT" : "POST"
-      const submitData: any = { ...formData }
+      const submitData: Record<string, unknown> = { ...formData }
+
+      // Parse numeric fields
+      if (submitData.departmentId === "") {
+        delete submitData.departmentId
+      }
 
       // Only include password if provided (for editing) or required (for creating)
       if (!submitData.password) {
@@ -163,15 +201,16 @@ export default function UsersPage() {
 
       const data = await res.json()
       if (data.success) {
+        toast.success(editingUser ? "Đã cập nhật tài khoản" : "Đã tạo tài khoản mới")
         setIsDialogOpen(false)
         resetForm()
         fetchUsers()
       } else {
-        alert(data.error?.message || "Có lỗi xảy ra")
+        toast.error("Có lỗi xảy ra", data.error?.message)
       }
     } catch (error) {
       console.error("Error:", error)
-      alert("Có lỗi xảy ra")
+      toast.error("Có lỗi xảy ra")
     } finally {
       setIsSubmitting(false)
     }
@@ -184,13 +223,14 @@ export default function UsersPage() {
       const res = await fetch(`/api/users?id=${user.id}`, { method: "DELETE" })
       const data = await res.json()
       if (data.success) {
+        toast.success("Đã xóa tài khoản")
         fetchUsers()
       } else {
-        alert(data.error?.message || "Có lỗi xảy ra")
+        toast.error("Có lỗi xảy ra", data.error?.message)
       }
     } catch (error) {
       console.error("Error:", error)
-      alert("Có lỗi xảy ra")
+      toast.error("Có lỗi xảy ra")
     }
   }
 
@@ -217,35 +257,31 @@ export default function UsersPage() {
       <Card>
         <CardContent className="p-4">
           <div className="flex gap-4 flex-wrap">
-            <Input
-              placeholder="Tìm theo tên, username, email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 min-w-[250px]"
+            <div className="relative flex-1 min-w-[250px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#795548]" />
+              <Input
+                placeholder="Tìm theo tên, username, email..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select
+              options={[{ value: "", label: "Tất cả vai trò" }, ...roleOptions]}
+              value={filterRole}
+              onChange={(e) => { setFilterRole(e.target.value); setPagination(p => ({ ...p, page: 1 })) }}
+              className="w-44"
             />
             <Select
-              value={filterRole}
-              onChange={(e) => setFilterRole(e.target.value)}
-              className="w-40"
-            >
-              <option value="">Tất cả vai trò</option>
-              {ROLE_OPTIONS.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </Select>
-            <Select
+              options={[
+                { value: "", label: "Tất cả trạng thái" },
+                { value: "true", label: "Đang hoạt động" },
+                { value: "false", label: "Đã khóa" },
+              ]}
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onChange={(e) => { setFilterStatus(e.target.value); setPagination(p => ({ ...p, page: 1 })) }}
               className="w-44"
-            >
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </Select>
+            />
           </div>
         </CardContent>
       </Card>
@@ -255,7 +291,7 @@ export default function UsersPage() {
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="bg-[#FFF8E1]">
                 <TableHead>Họ Tên</TableHead>
                 <TableHead>Username</TableHead>
                 <TableHead>Email</TableHead>
@@ -268,39 +304,71 @@ export default function UsersPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
+                // Skeleton Loading
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    {canManageUsers && <TableCell><Skeleton className="h-5 w-16 mx-auto" /></TableCell>}
+                  </TableRow>
+                ))
+              ) : users.length === 0 ? (
+                // Empty State
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-[#795548]">
-                    Đang tải...
-                  </TableCell>
-                </TableRow>
-              ) : filteredUsers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-[#795548]">
-                    Không có tài khoản nào
+                  <TableCell colSpan={8} className="text-center py-12">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-16 h-16 rounded-full bg-[#FFF8E1] flex items-center justify-center">
+                        <UserX className="w-8 h-8 text-[#F9A825]" />
+                      </div>
+                      <div>
+                        <p className="text-[#5D4037] font-medium">Không có tài khoản nào</p>
+                        <p className="text-sm text-[#795548]">
+                          {debouncedSearch || filterRole || filterStatus !== "true"
+                            ? "Thử thay đổi bộ lọc tìm kiếm"
+                            : "Tạo tài khoản đầu tiên của bạn"}
+                        </p>
+                      </div>
+                      {canManageUsers && !debouncedSearch && !filterRole && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => { resetForm(); setIsDialogOpen(true) }}
+                          className="mt-2"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Thêm Tài Khoản
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredUsers.map((user) => (
+                users.map((user) => (
                   <TableRow key={user.id} className={!user.isActive ? "opacity-50" : ""}>
                     <TableCell className="font-medium">{user.fullName}</TableCell>
                     <TableCell className="font-mono text-sm">{user.username}</TableCell>
                     <TableCell className="text-sm">{user.email}</TableCell>
                     <TableCell>
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-[#FFF8E1] text-[#F57C00]">
+                      <Badge className={ROLE_COLORS[user.role] || "bg-gray-100"} variant="secondary">
                         {ROLE_LABELS[user.role]}
-                      </span>
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-sm">{user.branch?.name || "-"}</TableCell>
                     <TableCell>
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-medium ${
+                      <Badge
+                        className={
                           user.isActive
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
+                            ? "bg-green-100 text-green-700 hover:bg-green-100"
+                            : "bg-red-100 text-red-700 hover:bg-red-100"
+                        }
                       >
                         {user.isActive ? "Hoạt động" : "Đã khóa"}
-                      </span>
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-sm">{user.startDate ? formatDate(user.startDate) : "-"}</TableCell>
                     {canManageUsers && (
@@ -313,7 +381,7 @@ export default function UsersPage() {
                           >
                             <Edit className="w-4 h-4 text-[#5D4037]" />
                           </button>
-                          {user.id !== session?.user?.id && (
+                          {user.id !== currentUserId && (
                             <button
                               onClick={() => handleDelete(user)}
                               className="p-1.5 hover:bg-red-50 rounded transition-colors"
@@ -330,6 +398,36 @@ export default function UsersPage() {
               )}
             </TableBody>
           </Table>
+
+          {/* Pagination */}
+          {!loading && users.length > 0 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-[#E8D5B7]">
+              <p className="text-sm text-[#795548]">
+                Hiển thị {users.length} / {pagination.total} tài khoản
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
+                  disabled={pagination.page <= 1}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="text-sm text-[#5D4037]">
+                  Trang {pagination.page} / {pagination.totalPages || 1}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
+                  disabled={pagination.page >= pagination.totalPages}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -391,16 +489,11 @@ export default function UsersPage() {
 
             <Select
               label="Vai trò *"
+              options={roleOptions}
               value={formData.role}
               onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               disabled={!canChangeRole}
-            >
-              {ROLE_OPTIONS.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </Select>
+            />
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
@@ -415,11 +508,4 @@ export default function UsersPage() {
       </Dialog>
     </div>
   )
-}
-
-// Add session type
-declare global {
-  interface Window {
-    session?: { user?: { id: string } }
-  }
 }

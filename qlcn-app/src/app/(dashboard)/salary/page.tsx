@@ -86,7 +86,7 @@ export default function SalaryPage() {
       })
       const data = await res.json()
       if (data.success) {
-        fetchSalaries()
+        fetchSalaryData(setSalaries, setLoading)
         alert("Tính lương thành công!")
       }
     } catch (error) {
