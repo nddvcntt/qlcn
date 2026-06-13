@@ -43,17 +43,22 @@ d:\Other\QLCN
 
 | # | Task | Agent | Status |
 |---|------|-------|--------|
-| 1 | Project Setup | DevOps | Pending |
-| 2 | Database Schema | DevOps | Pending |
-| 3 | Auth System | Auth | Pending |
-| 4 | UI Components | UI/UX | Pending |
-| 5 | Products Module | Import/Export | Pending |
-| 6 | Import/Export Module | Import/Export | Pending |
-| 7 | Production Module | Production | Pending |
-| 8 | Salary Module | Salary | Pending |
-| 9 | Cost Module | Cost | Pending |
-| 10 | Reports Module | Reports | Pending |
-| 11 | Docker Deployment | DevOps | Pending |
+| 1 | Project Setup | DevOps | [x] Done |
+| 2 | Database Schema | DevOps | [x] Done |
+| 3 | Auth System | Auth | [x] Done |
+| 4 | UI Components | UI/UX | [x] Done |
+| 5 | Products Module | Import/Export | [x] Done |
+| 6 | Import/Export Module | Import/Export | [x] Done |
+| 7 | Production Module | Production | [x] Done |
+| 8 | Salary Module | Salary | [x] Done |
+| 9 | Cost Module | Cost | [x] Done |
+| 10 | Reports Module | Reports | [x] Done |
+| 11 | Selling Points Module | Import/Export | [x] Done |
+| 12 | Work Schedule Module | Production | [x] Done |
+| 13 | Docker Deployment | DevOps | [x] Done |
+| 14 | Users Management | Auth | [x] Done |
+| 15 | E2E Tests | Testing | [ ] Pending |
+| 16 | Excel Import | Data | [ ] Pending |
 
 ## Database Key Tables
 
@@ -86,4 +91,9 @@ User instructions always override these rules.
 1. Build pass
 2. No lint errors  
 3. Đã update SPEC.md nếu có thay đổi architecture
-4. Mô tả ngắn gì đã làm, gì cần làm tiếp
+4. Update TASKS.md với task status mới
+5. Mô tả ngắn gì đã làm, gì cần làm tiếp
+
+## Recent Updates (2026-06-13)
+- TASK_016: Users Management Module ✅ - BRANCH_DIRECTOR có quyền CRUD DEPARTMENT_HEAD/EMPLOYEE
+- Lương: GROUP_1 (Xa) = 80k/ca, GROUP_2 (Gần) = 70k/ca

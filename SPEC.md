@@ -938,7 +938,7 @@ CostRecord {
 | UC_02 | Đăng xuất | ✓ | ✓ | ✓ | ✓ |
 | UC_03 | Đổi mật khẩu | ✓ | ✓ | ✓ | ✓ |
 | **UC_USER** | | | | | |
-| UC_04 | Quản lý người dùng | ✓ | ✓ | ✗ | ✗ |
+| UC_04 | Quản lý người dùng | ✓ | ✓ (chi nhánh) | ✗ | ✗ |
 | UC_05 | Phân quyền | ✓ | ✗ | ✗ | ✗ |
 | **UC_BRANCH** | | | | | |
 | UC_06 | Tạo chi nhánh | ✓ | ✗ | ✗ | ✗ |
@@ -2281,3 +2281,25 @@ Post-deployment:
 *Lưu ý: Document này sẽ được cập nhật trong quá trình phát triển. Phiên bản: 1.1*
 *Ngày tạo: 2026-06-13*
 *Ngày cập nhật: 2026-06-13 v1.1 - Bổ sung Docker, Prisma Schema, Error Handling*
+*Ngày cập nhật: 2026-06-13 v1.2 - Hoàn thành Users Management, Lương xa/gần*
+
+---
+
+## CHANGELOG
+
+### v1.2 (2026-06-13)
+**Users Management Module**
+- [x] API CRUD đầy đủ tại `/api/users`
+- [x] UI quản lý tài khoản tại `/users`
+- [x] BRANCH_DIRECTOR có quyền tạo/sửa/xóa DEPARTMENT_HEAD và EMPLOYEE trong chi nhánh
+- [x] RBAC cập nhật: `users.delete` = [ADMIN, BRANCH_DIRECTOR]
+- [x] Sidebar navigation cho Users
+
+**Lương theo Điểm Bán**
+- [x] GROUP_1 (Xa): 80,000đ/ca
+- [x] GROUP_2 (Gần): 70,000đ/ca
+
+### v1.1 (2026-06-13)
+- Bổ sung Docker deployment
+- Bổ sung Prisma Schema chi tiết
+- Bổ sung Error Handling patterns

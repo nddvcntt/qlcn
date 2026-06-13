@@ -13,12 +13,14 @@
 
 ### AGENT_AUTH
 **Phạm vi**: Authentication, Authorization, RBAC
-**Tasks**: TASK_003
+**Tasks**: TASK_003, TASK_016
 **Files tạo**:
 - `src/lib/auth.ts` - NextAuth config
 - `src/middleware.ts` - Auth middleware
 - `src/lib/rbac.ts` - RBAC system
 - `src/app/api/auth/**`
+- `src/app/api/users/**` - Users CRUD API
+- `src/app/(dashboard)/users/**` - Users management UI
 
 ### AGENT_UI-UX
 **Phạm vi**: UI Components, Layout
@@ -104,6 +106,11 @@
 - Secondary: `#F9A825`
 - Background: `#FFFDF7`
 - Font: Inter, JetBrains Mono
+
+### Lương Theo Điểm Bán
+- GROUP_1 (Xa): 80,000đ/ca
+- GROUP_2 (Gần): 70,000đ/ca
+- Thưởng cơm nắm: 500đ/suất nếu bán ≥ 50 suất/ca
 
 ### Database (Prisma)
 - PostgreSQL

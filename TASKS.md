@@ -125,6 +125,18 @@
 - [x] Work Schedule page (`/work-schedule`)
 - [x] Luồng: NV đăng ký → GD duyệt
 
+#### TASK_016: Users Management Module ✅ COMPLETED
+**Agent**: AGENT_AUTH
+**Status**: [x] Completed
+**Date**: 2026-06-13
+**Description**: CRUD tài khoản cho BRANCH_DIRECTOR
+**Deliverables**:
+- [x] Users API (`/api/users`) với full CRUD
+- [x] Users page (`/users`)
+- [x] BRANCH_DIRECTOR có quyền: tạo, sửa, xóa (khóa) tài khoản DEPARTMENT_HEAD, EMPLOYEE trong chi nhánh
+- [x] Sidebar navigation cho Users
+- [x] RBAC cập nhật: `users.delete` cho BRANCH_DIRECTOR
+
 ### Deployment
 
 #### TASK_013: Docker Deployment ✅ COMPLETED
