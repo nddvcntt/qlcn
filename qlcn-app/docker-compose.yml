@@ -1,0 +1,67 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: qlcn-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-qlcn_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qlcn_password}
+      POSTGRES_DB: ${POSTGRES_DB:-qlcn_prod}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-qlcn_user} -d ${POSTGRES_DB:-qlcn_prod}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - qlcn-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: qlcn-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-qlcn_user}:${POSTGRES_PASSWORD:-qlcn_password}@postgres:5432/${POSTGRES_DB:-qlcn_prod}?schema=public
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      NODE_ENV: production
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    networks:
+      - qlcn-network
+
+  # Optional: Nginx reverse proxy (enable in production)
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: qlcn-nginx
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./certs:/etc/nginx/certs:ro
+  #   depends_on:
+  #     - app
+  #   networks:
+  #     - qlcn-network
+
+volumes:
+  postgres_data:
+    name: qlcn_postgres_data
+
+networks:
+  qlcn-network:
+    name: qlcn-network
+    driver: bridge

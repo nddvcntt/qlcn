@@ -1,5 +1,7 @@
 # TASKS.md - All Tasks Summary
 
+> **Last Updated:** 2026-06-14 | **Progress:** 14/16 (87.5%)
+
 ## Task List
 
 ### Foundation Tasks
@@ -17,9 +19,9 @@
 #### TASK_002: Database Schema ✅ COMPLETED
 **Agent**: AGENT_DEV-OPS
 **Status**: [x] Completed
-**Description**: Tạo Prisma schema với 18 tables
+**Description**: Tạo Prisma schema với 14 tables
 **Deliverables**:
-- [x] `prisma/schema.prisma` - 18 tables
+- [x] `prisma/schema.prisma` - 14 models
 - [x] Database migrations
 - [x] Seed data script
 
@@ -71,7 +73,7 @@
 **Deliverables**:
 - [x] Production API (`/api/production`)
 - [x] Production page (`/production`)
-- [x] Tính lương tự động theo ngày (0đ → 50k → 70-80k)
+- [x] Tính lương tự động theo ngày
 - [x] Tính thưởng ≥50 suất
 
 ### Secondary Modules
@@ -81,7 +83,7 @@
 **Status**: [x] Completed
 **Description**: Lương, thưởng, phạt
 **Deliverables**:
-- [x] Salary API (`/api/salary`)
+- [x] Salary API (`/api/salary`) - **với auth + RBAC**
 - [x] Salary calculation theo kỳ
 - [x] 2-level approval workflow (GD CN → Tổng GD)
 - [x] Bảng lương với chi tiết
@@ -91,7 +93,7 @@
 **Status**: [x] Completed
 **Description**: Chi phí cố định & biến đổi
 **Deliverables**:
-- [x] Costs API (`/api/costs`)
+- [x] Costs API (`/api/costs`) - **với auth + RBAC**
 - [x] Cost categories
 - [x] Cost page (`/costs`)
 
@@ -100,7 +102,7 @@
 **Status**: [x] Completed
 **Description**: Báo cáo + Dashboard
 **Deliverables**:
-- [x] Dashboard API (`/api/dashboard`)
+- [x] Dashboard API (`/api/dashboard`) - **với auth + branch filter**
 - [x] Dashboard page (`/dashboard`) với biểu đồ 14 ngày
 - [x] Reports page (`/reports`)
 - [x] Inventory page (`/inventory`)
@@ -114,14 +116,14 @@
 **Deliverables**:
 - [x] Selling Points API (`/api/selling-points`)
 - [x] Selling Points page (`/selling-points`)
-- [x] GROUP_1: 80,000đ/ca, GROUP_2: 75,000đ/ca
+- [x] GROUP_1: 80,000đ/ca (Xa), GROUP_2: 70,000đ/ca (Gần)
 
 #### TASK_012: Work Schedule Module ✅ COMPLETED
 **Agent**: AGENT_PRODUCTION
 **Status**: [x] Completed
 **Description**: Đăng ký & duyệt lịch làm việc
 **Deliverables**:
-- [x] Work Schedule API (`/api/work-schedule`)
+- [x] Work Schedule API (`/api/work-schedule`) - **với auth + ownership check**
 - [x] Work Schedule page (`/work-schedule`)
 - [x] Luồng: NV đăng ký → GD duyệt
 
@@ -131,45 +133,66 @@
 **Date**: 2026-06-13
 **Description**: CRUD tài khoản cho BRANCH_DIRECTOR
 **Deliverables**:
-- [x] Users API (`/api/users`) với full CRUD
+- [x] Users API (`/api/users`) với full CRUD - **với auth + RBAC**
 - [x] Users page (`/users`)
 - [x] BRANCH_DIRECTOR có quyền: tạo, sửa, xóa (khóa) tài khoản DEPARTMENT_HEAD, EMPLOYEE trong chi nhánh
 - [x] Sidebar navigation cho Users
 - [x] RBAC cập nhật: `users.delete` cho BRANCH_DIRECTOR
+
+#### TASK_017: API Security Hardening ✅ COMPLETED
+**Agent**: AGENT_AUTH
+**Status**: [x] Completed
+**Date**: 2026-06-13
+**Description**: Audit + fix security cho tất cả API routes
+**Deliverables**:
+- [x] Audit 7 API routes chính
+- [x] `api/salary` - Auth + RBAC + ownership
+- [x] `api/work-schedule` - Auth + ownership
+- [x] `api/import-orders` - Auth + force createdById
+- [x] `api/export-orders` - Auth + verify ownership
+- [x] `api/costs` - Auth + role filter
+- [x] `api/dashboard` - Auth + branch filter
+- [x] `api/users` - Refactor consistency
+- [x] Commit: `4fc0eb0` (pushed to main)
 
 ### Deployment
 
 #### TASK_013: Docker Deployment ✅ COMPLETED
 **Agent**: AGENT_DEV-OPS
 **Status**: [x] Completed
-**Description**: Docker + CI/CD
+**Date**: 2026-06-14
+**Description**: Docker + Production deployment
 **Deliverables**:
-- [x] `Dockerfile`
-- [x] `docker-compose.yml`
-- [x] `nginx/nginx.conf`
-- [x] Environment variables template
+- [x] `Dockerfile` - Multi-stage với Next.js standalone
+- [x] `docker-compose.yml` - PostgreSQL 16 + App
+- [x] `.dockerignore` - Exclude node_modules, .next, etc.
+- [x] `.env.example` (dev) + `.env.production.example`
+- [x] `src/app/api/health/route.ts` - Healthcheck endpoint
+- [x] `next.config.ts` - `output: "standalone"` + `serverExternalPackages`
 
 ### Testing & Data
 
 #### TASK_014: E2E Tests
 **Agent**: AGENT_TESTING
-**Status**: [ ] Pending
+**Status**: [~] In Progress (40% done)
 **Description**: Playwright E2E tests
 **Deliverables**:
-- [x] Test file `e2e/full-system.spec.ts`
+- [x] Test file `e2e/full-system.spec.ts` (partial)
 - [x] Test login flow (✅ pass)
 - [x] Test dashboard navigation (✅ pass)
 - [x] Test products CRUD (✅ pass)
-- [ ] Fix remaining selectors for other modules
+- [ ] Mở rộng test cho các modules còn lại
+- [ ] Fix remaining selectors
 
-#### TASK_015: Excel Import ✅ COMPLETED
+#### TASK_015: Excel Import ⏳ PENDING
 **Agent**: AGENT_DATA
-**Status**: [x] Completed
-**Description**: Import dữ liệu từ Excel
+**Status**: [ ] Pending
+**Description**: Bulk import dữ liệu từ Excel
 **Deliverables**:
-- [x] Excel reader script (`src/scripts/importExcel.ts`)
-- [x] Data mapping functions
-- [x] Batch import to DB
+- [x] Excel reader script (`scripts/importExcel.py`) - ở root
+- [ ] UI bulk import
+- [ ] Validation rules
+- [ ] Error reporting
 
 ---
 
@@ -204,14 +227,14 @@ TASK_001 (Setup) ✅
                          TASK_013 (Docker) ✅
                               │
                          TASK_014 (E2E) 🔄
-                         TASK_015 (Excel) ✅
+                         TASK_015 (Excel) ⏳
 ```
 
 ---
 
 ## Quick Reference
 
-### Completed Modules
+### Completed Modules (URLs)
 - Dashboard: `/dashboard` - Biểu đồ 14 ngày
 - Điểm Bán: `/selling-points` - GROUP_1/GROUP_2
 - Sản Phẩm: `/products` - Thưởng cơm nắm, hoa hồng nước
@@ -223,6 +246,12 @@ TASK_001 (Setup) ✅
 - Lương: `/salary`
 - Chi Phí: `/costs`
 - Báo Cáo: `/reports`
+- Users: `/users` (Admin + BRANCH_DIRECTOR)
+
+### API Routes (28)
+- Auth: `/api/auth/*` (NextAuth)
+- Resources: `/api/{users,products,import-orders,export-orders,inventory,production,salary,costs,reports,dashboard,work-schedule,selling-points}`
+- System: `/api/health`
 
 ### Default Users (after seed)
 - Admin: `admin` / `admin123` (Tổng GD)
@@ -230,20 +259,32 @@ TASK_001 (Setup) ✅
 - Trưởng Phòng: `tp` / `tp123`
 - Nhân Viên: `nv` / `nv123`
 
-### Build Status
+### Build Status (2026-06-14)
 ```
-✓ npm run build - SUCCESS (13.1s)
+✓ npm run build - SUCCESS (~20s)
 ✓ Compiled successfully
-✓ 26 routes generated
+✓ 28 routes generated
+✓ npm run lint - 0 errors (149 warnings)
 ```
 
-### Recent Optimizations (2026-06-13)
-- Gỡ transition toàn cục trong globals.css (tăng FPS)
-- Sửa lỗi layout Dashboard (ml-[240px] thừa)
-- Sửa React Hook trong ThemeProvider
-- Rename middleware.ts → proxy.ts (Next.js 16.2 convention)
-- Fix user delete self-protection logic
+### Recent Updates (2026-06-14)
+- ✅ API Security Hardening - 7 routes audited + fixed
+- ✅ Docker Production Setup - Multi-stage build, PostgreSQL
+- ✅ Healthcheck endpoint - `/api/health`
+- ✅ Next.js standalone output - cho Docker
+- ✅ Comprehensive README - Status, quick start 3 cách
+- ✅ DEPLOY_VERCEL.md - Hướng dẫn deploy Vercel chi tiết
+
+### Recent Updates (2026-06-13)
+- ✅ Users Management Module - BRANCH_DIRECTOR CRUD
+- ✅ Selling Points - GROUP_1 (80k) / GROUP_2 (70k)
+- ✅ Work Schedule - Luồng đăng ký → duyệt
+- ✅ Gỡ transition toàn cục trong globals.css (tăng FPS)
+- ✅ Sửa lỗi layout Dashboard (ml-[240px] thừa)
+- ✅ Sửa React Hook trong ThemeProvider
+- ✅ Rename middleware.ts → proxy.ts (Next.js 16.2 convention)
+- ✅ Fix user delete self-protection logic
 
 ---
 
-*Last Updated: 2026-06-13*
+*Last Updated: 2026-06-14*
