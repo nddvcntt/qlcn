@@ -140,6 +140,10 @@ async function main() {
   console.log(`Đang import ${uniqueUsers.size} nhân viên...`)
   const userMap = new Map<string, string>()
   const admin = await prisma.user.findUnique({ where: { username: 'admin' } })
+
+  // Build shift map (code → id)
+  const allShifts = await prisma.shift.findMany()
+  const shiftMap = new Map<string, string>(allShifts.map((s: any) => [s.code, s.id]))
   
   for (const fullName of uniqueUsers) {
     const username = fullName.toLowerCase().replace(/\\s+/g, '') + Math.floor(Math.random() * 1000)
@@ -190,15 +194,17 @@ async function main() {
     if (isNaN(date.getTime())) continue
 
     const shift = shiftName.toLowerCase().includes('sáng') ? 'SANG' : 'CHIEU'
+    const shiftId = shiftMap.get(shift)
+    if (!shiftId) continue
 
     try {
       // Create WorkSchedule
       const schedule = await prisma.workSchedule.upsert({
         where: {
-          employeeId_workDate_shift: {
+          employeeId_workDate_shiftId: {
             employeeId,
             workDate: date,
-            shift
+            shiftId
           }
         },
         update: {},
@@ -207,7 +213,8 @@ async function main() {
           branchId: branch.id,
           sellingPointId: pointId,
           workDate: date,
-          shift,
+          shiftId,
+          shiftCode: shift,
           status: 'APPROVED',
           approvedById: admin!.id
         }
@@ -220,7 +227,8 @@ async function main() {
           branchId: branch.id,
           sellingPointId: pointId,
           workDate: date,
-          shift,
+          shiftId,
+          shiftCode: shift,
           quantity,
           baseSalary: 70000,
           bonusAmount: quantity >= 50 ? 500 * quantity : 0,

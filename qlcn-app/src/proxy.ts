@@ -4,10 +4,12 @@ import { NextResponse } from "next/server"
 export default auth((req) => {
   const isLoggedIn = !!req.auth
   const isLoginPage = req.nextUrl.pathname === "/login"
-  const isApiRoute = req.nextUrl.pathname.startsWith("/api/auth")
-  
-  // Allow API auth routes
-  if (isApiRoute) {
+  const isApiAuth = req.nextUrl.pathname.startsWith("/api/auth")
+  const isApiMe = req.nextUrl.pathname.startsWith("/api/me")
+  const isApiHealth = req.nextUrl.pathname.startsWith("/api/health")
+
+  // Allow API auth/me/health routes
+  if (isApiAuth || isApiMe || isApiHealth) {
     return NextResponse.next()
   }
   

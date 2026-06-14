@@ -5,6 +5,7 @@ import { prisma } from "./prisma"
 import { UserRole } from "./rbac"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   providers: [
     Credentials({
       name: "credentials",

@@ -56,3 +56,18 @@ Thumbs.db
 
 # Build artifacts
 .next/
+
+# Test artifacts
+test-results/
+playwright-report/
+
+# Backups (keep structure)
+backups/*.sql
+
+# Excel/CSV dumps
+excel-dump.txt
+*.csv
+test-login.json
+
+# SQL schema duplicate
+prisma/schema.sqlite.prisma

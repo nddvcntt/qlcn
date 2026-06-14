@@ -1,6 +1,4 @@
 import { prisma } from "@/lib/prisma"
-import { Sidebar } from "@/components/layout/sidebar"
-import { Topbar } from "@/components/layout/topbar"
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { DashboardClient } from "@/components/dashboard-client"
@@ -134,23 +132,6 @@ export default async function DashboardPage() {
 
   const branchId = session.user?.branchId || undefined
   const data = await getDashboardData(branchId)
-  
-  // Type assertion for session user with branch
-  const sessionUser = session.user as { role?: string; branch?: { name?: string } }
-  const branchName = sessionUser?.branch?.name
 
-  return (
-    <div className="flex h-screen bg-background">
-      <Sidebar 
-        userRole={session.user?.role} 
-        branchName={branchName} 
-      />
-      <div className="flex-1 flex flex-col overflow-hidden ml-[240px]">
-        <Topbar user={session.user} />
-        <main className="flex-1 overflow-auto p-6">
-          <DashboardClient {...data} />
-        </main>
-      </div>
-    </div>
-  )
+  return <DashboardClient {...data} />
 }

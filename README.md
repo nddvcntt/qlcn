@@ -1,6 +1,8 @@
 # Hệ Thống Quản Lý Cơm Nắm (QLCN)
 
-> **Status:** ✅ Production-Ready Demo | Version 0.1.0 | Last Updated: 2026-06-14
+> **Status:** ✅ Production-Ready | Version 0.2.0 | Last Updated: 2026-06-14
+> **Database:** PostgreSQL 16 (Docker) | **Frontend Port:** 8080 | **DB Port:** 5434
+> **E2E Tests:** 47/47 PASS (100%) | **Build:** ✅ PASS (28 routes)
 
 ## Tổng Quan
 
@@ -23,74 +25,42 @@ Xem [SPEC.md](./SPEC.md) để biết chi tiết đầy đủ.
 | **Users Management** (Module 014) | ✅ Done | 100% |
 | **API Security Hardening** (Module 016) | ✅ Done | 100% |
 | **Docker Deployment** (Module 011) | ✅ Done | 100% |
-| **E2E Tests** (Module 015) | ⏳ Pending | 0% |
+| **Inventory API + Sidebar Toggle** (Module 017) | ✅ Done | 100% |
+| **E2E Tests** (Module 015) | ✅ Done | 100% (47/47) |
 | **Excel Import** (Module 016) | ⏳ Pending | 0% |
 
 **Build:** ✅ PASS (28 routes) | **Lint:** ✅ 0 errors | **Security:** ✅ Auth + RBAC + Branch isolation
 
 ---
 
-## 🚀 Quick Start (3 cách)
+## 🚀 Quick Start (PostgreSQL - Production-Ready)
 
-### Option 1: Local Development (SQLite - Nhanh nhất)
+### Cấu hình hiện tại
+- **Database:** PostgreSQL 16 (Docker) - port 5434
+- **Frontend:** Next.js 16.2.9 - port 8080
+- **URL:** http://localhost:8080
+
+### Khởi động nhanh
 
 ```bash
-cd qlcn-app
+# 1. Đảm bảo Docker Desktop đang chạy
+# 2. Từ thư mục qlcn-app:
+
 npm install
 npx prisma generate
 npx prisma db push
 npx prisma db seed
-npm run dev
-# → http://localhost:3000
+npm run build
+npx next start -p 8080
 ```
+
+**Truy cập:** http://localhost:8080
 
 **Default accounts:**
-- `admin` / `admin123` (Tổng GD)
-- `gdcn` / `gdcn123` (GD Chi Nhánh)
-
-### Option 2: Docker Production (PostgreSQL)
-
-```bash
-cd qlcn-app
-
-# 1. Generate secrets
-echo "NEXTAUTH_SECRET=$(openssl rand -base64 32)" >> .env.production
-# Edit .env.production - đổi POSTGRES_PASSWORD
-
-# 2. Build và run
-docker-compose --env-file .env.production up -d
-
-# 3. Run migrations (first time only)
-docker-compose exec app npx prisma db push
-
-# 4. Seed data (optional)
-docker-compose exec app npx prisma db seed
-
-# 5. Xem logs
-docker-compose logs -f app
-```
-
-**App:** http://localhost:3000
-
-### Option 3: Deploy Demo lên Vercel (Free) ⭐
-
-Xem chi tiết ở **[DEPLOY_VERCEL.md](./DEPLOY_VERCEL.md)**
-
-```bash
-# Cài Vercel CLI
-npm i -g vercel
-
-# Login
-vercel login
-
-# Deploy
-cd qlcn-app
-vercel
-```
-
-⚠️ **Lưu ý Vercel:**
-- Vercel **không hỗ trợ SQLite** lâu dài - cần dùng database cloud (Vercel Postgres, Neon, Supabase)
-- Cho demo nhanh: dùng **Neon.tech** (PostgreSQL free tier) - xem hướng dẫn chi tiết trong [DEPLOY_VERCEL.md](./DEPLOY_VERCEL.md)
+- `admin` / `admin123` (Tổng GD - full quyền)
+- `gdcn` / `admin123` (GD Chi Nhánh - quyền chi nhánh)
+- `tp` / `admin123` (Trưởng Phòng)
+- `nv` / `admin123` (Nhân Viên - chỉ thấy lương cá nhân)
 
 ---
 

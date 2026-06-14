@@ -114,15 +114,30 @@ export async function POST(request: NextRequest) {
     }
 
     let totalRevenue = 0
+    let totalDiscount = 0
     const orderItems = items.map((item: any) => {
-      const total = Number(item.quantity) * Number(item.unitPrice)
+      const qty = Number(item.quantity) || 0
+      const price = Number(item.unitPrice) || 0
+      const discount = Number(item.discountAmount || 0)
+      if (discount < 0) {
+        throw new Error("INVALID_DISCOUNT")
+      }
+      if (discount >= price) {
+        throw new Error("DISCOUNT_EXCEEDS_PRICE")
+      }
+      const netPrice = price - discount
+      const total = qty * netPrice
+      const itemDiscountTotal = qty * discount
       totalRevenue += total
+      totalDiscount += itemDiscountTotal
       return {
         productId: item.productId,
-        quantity: item.quantity,
-        giftedQuantity: item.giftedQuantity || 0,
-        unitPrice: item.unitPrice,
+        quantity: qty,
+        giftedQuantity: Number(item.giftedQuantity || 0),
+        unitPrice: price,
+        discountAmount: discount,
         totalAmount: total,
+        bonusExcluded: discount > 0,
       }
     })
 
@@ -132,6 +147,7 @@ export async function POST(request: NextRequest) {
         sellingPointId,
         exportDate: new Date(exportDate),
         totalRevenue,
+        totalDiscount,
         note: note || null,
         createdById: userId,
         status: "APPROVED",
@@ -141,7 +157,19 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({ success: true, data: order }, { status: 201 })
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === "INVALID_DISCOUNT") {
+      return NextResponse.json(
+        { success: false, error: { code: "INVALID_INPUT", message: "Giảm giá không được âm" } },
+        { status: 400 }
+      )
+    }
+    if (error.message === "DISCOUNT_EXCEEDS_PRICE") {
+      return NextResponse.json(
+        { success: false, error: { code: "INVALID_INPUT", message: "Giảm giá phải nhỏ hơn giá bán" } },
+        { status: 400 }
+      )
+    }
     console.error("Create export order error:", error)
     return NextResponse.json(
       { success: false, error: { code: "INTERNAL_ERROR", message: "Lỗi hệ thống" } },

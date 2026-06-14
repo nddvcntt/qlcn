@@ -7,29 +7,37 @@ async function main() {
   console.log("🌱 Bắt đầu seed database...\n")
 
   // 1. Tạo Organization
-  const org = await prisma.organization.create({
-    data: { name: "Cơm Nắm Việt Nam" },
+  const org = await prisma.organization.upsert({
+    where: { id: "default-org" },
+    update: {},
+    create: { id: "default-org", name: "Cơm Nắm Việt Nam" },
   })
-  console.log("✅ Created Organization:", org.name)
+  console.log("✅ Organization:", org.name)
 
   // 2. Tạo Branch
-  const branch = await prisma.branch.create({
-    data: {
+  const branch = await prisma.branch.upsert({
+    where: { code: "CN_HN_01" },
+    update: {},
+    create: {
       organizationId: org.id,
       name: "Chi nhánh Hà Nội",
       code: "CN_HN_01",
     },
   })
-  console.log("✅ Created Branch:", branch.name)
+  console.log("✅ Branch:", branch.name)
 
   // 3. Tạo Departments
-  const deptProduction = await prisma.department.create({
-    data: { branchId: branch.id, name: "Phòng Sản Xuất", code: "SX" },
+  const deptProduction = await prisma.department.upsert({
+    where: { branchId_code: { branchId: branch.id, code: "SX" } },
+    update: {},
+    create: { branchId: branch.id, name: "Phòng Sản Xuất", code: "SX" },
   })
-  const deptSales = await prisma.department.create({
-    data: { branchId: branch.id, name: "Phòng Kinh Doanh", code: "KD" },
+  const deptSales = await prisma.department.upsert({
+    where: { branchId_code: { branchId: branch.id, code: "KD" } },
+    update: {},
+    create: { branchId: branch.id, name: "Phòng Kinh Doanh", code: "KD" },
   })
-  console.log("✅ Created Departments:", deptProduction.name, deptSales.name)
+  console.log("✅ Departments:", deptProduction.name, deptSales.name)
 
   // 4. Tạo SellingPoints với groups
   // GROUP_1: Xa - 80k/ca | GROUP_2: Gần - 70k/ca
@@ -46,11 +54,17 @@ async function main() {
   ]
 
   for (const sp of sellingPoints) {
-    await prisma.sellingPoint.create({
-      data: { ...sp, branchId: branch.id },
-    })
+    const existing = await prisma.sellingPoint.findFirst({ where: { code: sp.code, branchId: branch.id } })
+    if (existing) {
+      await prisma.sellingPoint.update({
+        where: { id: existing.id },
+        data: { name: sp.name, group: sp.group, salaryPerShift: sp.salaryPerShift },
+      })
+    } else {
+      await prisma.sellingPoint.create({ data: { ...sp, branchId: branch.id } })
+    }
   }
-  console.log("✅ Created SellingPoints:", sellingPoints.length, "điểm bán")
+  console.log("✅ SellingPoints:", sellingPoints.length, "điểm bán")
 
   // 5. Tạo Products
   const products = [
@@ -69,11 +83,13 @@ async function main() {
   ]
 
   for (const p of products) {
-    await prisma.product.create({
-      data: { ...p, branchId: null },
+    await prisma.product.upsert({
+      where: { code: p.code },
+      update: {},
+      create: { ...p, branchId: null },
     })
   }
-  console.log("✅ Created Products:", products.length, "sản phẩm")
+  console.log("✅ Products:", products.length, "sản phẩm")
 
   // 6. Tạo CostCategories
   const costCategories = [
@@ -89,16 +105,40 @@ async function main() {
   ]
 
   for (const c of costCategories) {
-    await prisma.costCategory.create({ data: c })
+    const existing = await prisma.costCategory.findFirst({ where: { name: c.name } })
+    if (existing) {
+      await prisma.costCategory.update({ where: { id: existing.id }, data: c })
+    } else {
+      await prisma.costCategory.create({ data: c })
+    }
   }
-  console.log("✅ Created CostCategories:", costCategories.length, "danh mục")
+  console.log("✅ CostCategories:", costCategories.length, "danh mục")
+
+  // 6.5. Tạo Shifts (Ca làm việc)
+  const shifts = [
+    { branchId: branch.id, code: "SANG", name: "Ca Sáng", startTime: "06:00", endTime: "14:00", salaryRate: 70000, bonusPerUnit: 500, bonusThreshold: 50, sortOrder: 1 },
+    { branchId: branch.id, code: "CHIEU", name: "Ca Chiều", startTime: "14:00", endTime: "22:00", salaryRate: 70000, bonusPerUnit: 500, bonusThreshold: 50, sortOrder: 2 },
+    { branchId: branch.id, code: "TOI", name: "Ca Tối", startTime: "22:00", endTime: "06:00", salaryRate: 80000, bonusPerUnit: 500, bonusThreshold: 50, sortOrder: 3 },
+  ]
+
+  for (const s of shifts) {
+    const existing = await prisma.shift.findFirst({ where: { branchId: branch.id, code: s.code } })
+    if (existing) {
+      await prisma.shift.update({ where: { id: existing.id }, data: s })
+    } else {
+      await prisma.shift.create({ data: s })
+    }
+  }
+  console.log("✅ Shifts:", shifts.length, "ca")
 
   // 7. Tạo Users
   const hashedPassword = await bcrypt.hash("admin123", 12)
 
   // Admin (Tổng GD)
-  await prisma.user.create({
-    data: {
+  await prisma.user.upsert({
+    where: { username: "admin" },
+    update: {},
+    create: {
       username: "admin",
       password: hashedPassword,
       fullName: "Nguyễn Văn Admin",
@@ -109,8 +149,10 @@ async function main() {
   })
 
   // Branch Director
-  await prisma.user.create({
-    data: {
+  await prisma.user.upsert({
+    where: { username: "gdcn" },
+    update: {},
+    create: {
       username: "gdcn",
       password: hashedPassword,
       fullName: "Trần Thị GD",
@@ -121,8 +163,10 @@ async function main() {
   })
 
   // Department Head
-  await prisma.user.create({
-    data: {
+  await prisma.user.upsert({
+    where: { username: "tp" },
+    update: {},
+    create: {
       username: "tp",
       password: hashedPassword,
       fullName: "Lê Văn TP",
@@ -134,8 +178,10 @@ async function main() {
   })
 
   // Employee
-  await prisma.user.create({
-    data: {
+  await prisma.user.upsert({
+    where: { username: "nv" },
+    update: {},
+    create: {
       username: "nv",
       password: hashedPassword,
       fullName: "Phạm Thị NV",

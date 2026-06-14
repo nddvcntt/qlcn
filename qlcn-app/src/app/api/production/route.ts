@@ -165,10 +165,37 @@ export async function POST(request: NextRequest) {
     )
 
     // Calculate bonus (500đ/suất nếu >= 50)
-    const bonusAmount = calculateComNamBonus(quantity)
+    // Nếu ca này có ExportOrderItem với discount > 0 → loại khỏi thưởng
+    const dayStart = new Date(workDateObj)
+    dayStart.setUTCHours(0, 0, 0, 0)
+    const dayEnd = new Date(workDateObj)
+    dayEnd.setUTCHours(23, 59, 59, 999)
+    const hasDiscount = await prisma.exportOrderItem.findFirst({
+      where: {
+        discountAmount: { gt: 0 },
+        exportOrder: {
+          branchId: employee.branchId || userBranchId,
+          sellingPointId,
+          exportDate: { gte: dayStart, lte: dayEnd },
+          status: { in: ["APPROVED", "DRAFT"] },
+        },
+      },
+      select: { id: true },
+    })
+    const excludedFromBonus = !!hasDiscount
+    const bonusAmount = excludedFromBonus ? 0 : calculateComNamBonus(quantity)
 
     // Total salary = base salary + bonus
     const totalSalary = baseSalary + bonusAmount
+
+    // Lookup shift by code
+    const shiftRecord = await prisma.shift.findFirst({ where: { code: shift } })
+    if (!shiftRecord) {
+      return NextResponse.json(
+        { success: false, error: `Không tìm thấy ca làm việc: ${shift}` },
+        { status: 400 }
+      )
+    }
 
     const production = await prisma.dailyProduction.create({
       data: {
@@ -176,12 +203,14 @@ export async function POST(request: NextRequest) {
         branchId: employee.branchId || userBranchId,
         sellingPointId,
         workDate: workDateObj,
-        shift,
+        shiftId: shiftRecord.id,
+        shiftCode: shift,
         quantity,
         employeeStatus,
         baseSalary,
         bonusAmount,
         commissionAmount: 0,
+        excludedFromBonus,
         totalSalary,
         note,
       },

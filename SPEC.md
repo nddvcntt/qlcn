@@ -1418,6 +1418,107 @@ Mọi thao tác quan trọng đều được ghi log:
 - Mỗi user chỉ thuộc 1 phòng ban
 - Không có user nào vừa là GD Chi Nhánh vừa là Tổng GD
 
+### 11.6 Quy tắc về Transaction & Inventory Consistency (RÀNG BUỘC KỸ THUẬT)
+
+> **Bổ sung 2026-06-14** sau phản biện schema — chuẩn hóa pattern ghi nhận kho.
+
+**Nguyên tắc:** Mọi thao tác làm thay đổi tồn kho (nhập hàng, xuất hàng, hủy phiếu, điều chỉnh) **BẮT BUỘC** dùng `prisma.$transaction` ở application layer. KHÔNG dùng Postgres trigger vì:
+
+1. Prisma không hỗ trợ native trigger — phải viết raw SQL migration, khó maintain
+2. Trigger ẩn logic khỏi codebase Next.js → debug khó
+3. $transaction cung cấp rollback tự động khi có lỗi
+
+**Pattern chuẩn (áp dụng cho `/api/import-orders`, `/api/export-orders`):**
+
+```typescript
+await prisma.$transaction(async (tx) => {
+  // 1. Tạo header (ImportOrder/ExportOrder)
+  const order = await tx.importOrder.create({ data: { ... } })
+
+  // 2. Tạo items với SNAPSHOT giá (NO retroactive pricing)
+  await tx.importOrderItem.createMany({
+    data: items.map(it => ({
+      orderId: order.id,
+      productId: it.productId,
+      unitPrice: it.unitPrice,  // ← snapshot từ Product
+      quantity: it.qty,
+      totalAmount: it.qty * it.unitPrice,
+    })),
+  })
+
+  // 3. Cập nhật Inventory (+ nhập / - xuất)
+  for (const it of items) {
+    await tx.inventory.upsert({
+      where: { branchId_productId: { branchId, productId: it.productId } },
+      create: { branchId, productId: it.productId, quantity: it.qty },
+      update: { quantity: { increment: it.qty } },
+    })
+  }
+
+  // 4. Ghi AuditLog (optional, nếu có)
+  await tx.auditLog.create({
+    data: { userId, action: 'CREATE_IMPORT_ORDER', entityId: order.id, ... },
+  })
+})
+```
+
+**Ràng buộc DB-level (Postgres CHECK):**
+- `Inventory.quantity >= 0` — chặn tồn âm
+- Validate ở application TRƯỚC khi update (vì CHECK fail = lỗi 500)
+
+**Trường hợp đặc biệt:**
+- Xuất hàng vượt tồn kho: REJECT ở app layer (return 400), KHÔNG ghi partial
+- Hủy phiếu nhập: phải tạo phiếu nhập BÙ (negative quantity) thay vì DELETE
+- Adjust thủ công: cần GD Chi Nhánh duyệt + ghi AuditLog lý do
+
+---
+
+### 11.7 Quy tắc về Snapshot Pricing (NO Retroactive Pricing)
+
+> **Bổ sung 2026-06-14** — chống sai lệch báo cáo lịch sử.
+
+**Nguyên tắc:** Khi ghi `ImportOrderItem.unitPrice` hoặc `ExportOrderItem.unitPrice`, **COPY** từ `Product.costPrice/sellingPrice` tại thời điểm tạo phiếu. KHÔNG BAO GIỜ JOIN ngược lại `Product` để tính tiền trong báo cáo quá khứ.
+
+**Lý do:**
+- GD Chi Nhánh có thể đổi giá hôm nay → báo cáo tuần trước KHÔNG được đổi theo
+- Audit trail y tế/tài chính cần giá cố định tại thời điểm giao dịch
+
+**Implementation:**
+```typescript
+// ✅ ĐÚNG — snapshot tại lúc tạo
+const product = await tx.product.findUniqueOrThrow({ where: { id: it.productId } })
+await tx.exportOrderItem.create({
+  data: { ..., unitPrice: product.sellingPrice, totalAmount: qty * product.sellingPrice }
+})
+
+// ❌ SAI — JOIN ngược sẽ cho giá HIỆN TẠI
+const items = await tx.exportOrderItem.findMany({ include: { product: true } })
+// → báo cáo tháng 3 dùng giá tháng 6 nếu GD đổi giá → SAI
+```
+
+**Khi GD đổi giá:** Insert row mới vào `PriceHistory`, KHÔNG update `Product` cũ (giữ history).
+
+---
+
+### 11.8 Quy tắc về Audit Trail
+
+> **Bổ sung 2026-06-14** — yêu cầu tuân thủ.
+
+Mọi thao tác CREATE/UPDATE/DELETE trên các bảng nghiệp vụ chính **NÊN** ghi `AuditLog`:
+- `User` (tạo/sửa/xóa tài khoản)
+- `Product` (đổi giá)
+- `ImportOrder`, `ExportOrder` (tạo/hủy)
+- `SalaryRecord` (tính lương, duyệt lương)
+- `CostRecord` (chi phí > 1 triệu)
+
+Schema `AuditLog`:
+```
+- id, userId, action (enum), entityType, entityId
+- oldValue, newValue (JSON)
+- ipAddress, userAgent
+- createdAt
+```
+
 ---
 
 ## PHẦN XII: THIẾT KẾ MOBILE-FIRST (TƯƠNG LAI)
@@ -2278,14 +2379,22 @@ Post-deployment:
 
 ---
 
-*Lưu ý: Document này sẽ được cập nhật trong quá trình phát triển. Phiên bản: 1.1*
+*Lưu ý: Document này sẽ được cập nhật trong quá trình phát triển. Phiên bản: 1.3*
 *Ngày tạo: 2026-06-13*
 *Ngày cập nhật: 2026-06-13 v1.1 - Bổ sung Docker, Prisma Schema, Error Handling*
 *Ngày cập nhật: 2026-06-13 v1.2 - Hoàn thành Users Management, Lương xa/gần*
+*Ngày cập nhật: 2026-06-14 v1.3 - Bổ sung Transaction pattern (11.6), Snapshot Pricing (11.7), Audit Trail (11.8)*
 
 ---
 
 ## CHANGELOG
+
+### v1.3 (2026-06-14)
+**Bổ sung quy tắc kỹ thuật** (sau phản biện schema):
+- [x] **§11.6 Transaction & Inventory Consistency** — bắt buộc `prisma.$transaction` cho mọi thao tác inventory
+- [x] **§11.7 Snapshot Pricing (NO Retroactive Pricing)** — copy giá tại thời điểm ghi, không JOIN ngược
+- [x] **§11.8 Audit Trail** — ghi AuditLog cho các thao tác quan trọng
+- [x] Giữ nguyên design đã tốt: `Organization`, `AuditLog`, `PriceHistory`, `CostCategory` riêng, `UserStatus: PROBATION | TRIAL | OFFICIAL`, `ProductType: COM_NAM | WATER | OTHER`, `Shift: SANG | CHIEU | TOI`
 
 ### v1.2 (2026-06-13)
 **Users Management Module**

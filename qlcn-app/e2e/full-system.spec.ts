@@ -15,6 +15,9 @@ async function login(page: any) {
   await page.waitForURL("**/dashboard")
 }
 
+// Helper: get the page H1 (inside main, not sidebar)
+const pageH1 = (page: any) => page.locator("main h1").first()
+
 // ============ AUTH TESTS ============
 
 test.describe("Authentication", () => {
@@ -58,14 +61,16 @@ test.describe("Dashboard", () => {
   })
 
   test("should show stats cards", async ({ page }) => {
-    await expect(page.locator("text=Tổng Doanh Thu")).toBeVisible()
-    await expect(page.locator("text=Chi Phí")).toBeVisible()
-    await expect(page.locator("text=Lợi Nhuận")).toBeVisible()
-    await expect(page.locator("text=Đơn Hàng")).toBeVisible()
+    const main = page.locator("main")
+    await expect(main.locator("text=Tổng Doanh Thu")).toBeVisible()
+    await expect(main.getByText("Chi Phí", { exact: true })).toBeVisible()
+    await expect(main.locator("text=Lợi Nhuận")).toBeVisible()
+    await expect(main.locator("text=Đơn Hàng")).toBeVisible()
   })
 
   test("should show 14-day chart", async ({ page }) => {
-    await expect(page.locator("text=Doanh Số 14 Ngày")).toBeVisible()
+    const main = page.locator("main")
+    await expect(main.getByText("Doanh Số 14 Ngày", { exact: true })).toBeVisible()
   })
 
   test("should navigate to other pages via sidebar", async ({ page }) => {
@@ -141,13 +146,14 @@ test.describe("Selling Points Module", () => {
   })
 
   test("should display selling points page", async ({ page }) => {
-    await expect(page.locator("h1")).toContainText("Điểm Bán Hàng")
+    await expect(pageH1(page)).toContainText("Điểm Bán Hàng")
   })
 
   test("should show selling points table with groups", async ({ page }) => {
-    await expect(page.locator("table")).toBeVisible()
-    await expect(page.locator("text=Nhóm 1")).toBeVisible()
-    await expect(page.locator("text=Nhóm 2")).toBeVisible()
+    const main = page.locator("main")
+    await expect(main.locator("table")).toBeVisible()
+    await expect(main.locator("span", { hasText: /^Nhóm 1$/ }).first()).toBeVisible()
+    await expect(main.locator("span", { hasText: /^Nhóm 2$/ }).first()).toBeVisible()
   })
 
   test("should open add selling point dialog", async ({ page }) => {
@@ -183,12 +189,13 @@ test.describe("Work Schedule Module", () => {
   })
 
   test("should display work schedule page", async ({ page }) => {
-    await expect(page.locator("h1")).toContainText("Lịch Làm Việc")
+    await expect(pageH1(page)).toContainText("Lịch Làm Việc")
   })
 
   test("should show filters", async ({ page }) => {
-    await expect(page.locator('input[type="date"]')).toBeVisible()
-    await expect(page.locator("text=Trạng thái")).toBeVisible()
+    const main = page.locator("main")
+    await expect(main.locator('input[type="date"]')).toBeVisible()
+    await expect(main.getByText("Trạng thái", { exact: true }).first()).toBeVisible()
   })
 
   test("should open register dialog", async ({ page }) => {
@@ -212,24 +219,26 @@ test.describe("Production Module", () => {
   })
 
   test("should display production page", async ({ page }) => {
-    await expect(page.locator("h1")).toContainText("Năng Suất Lao Động")
+    await expect(pageH1(page)).toContainText("Năng Suất Lao Động")
   })
 
   test("should show stats cards", async ({ page }) => {
-    await expect(page.locator("text=Tổng sản lượng")).toBeVisible()
-    await expect(page.locator("text=Tổng lương")).toBeVisible()
-    await expect(page.locator("text=Tổng thưởng")).toBeVisible()
+    const main = page.locator("main")
+    await expect(main.locator("text=Tổng sản lượng")).toBeVisible()
+    await expect(main.locator("text=Tổng lương")).toBeVisible()
+    await expect(main.locator("text=Tổng thưởng")).toBeVisible()
   })
 
   test("should open input dialog", async ({ page }) => {
-    await page.click('button:has-text("Nhập Năng Suất")')
-    await expect(page.locator('text=Nhập Năng Suất')).toBeVisible()
+    await page.locator('main button:has-text("Nhập Năng Suất")').click()
+    await expect(page.getByRole('heading', { name: 'Nhập Năng Suất' })).toBeVisible()
   })
 
   test("should show salary calculation rules", async ({ page }) => {
-    await page.click('button:has-text("Nhập Năng Suất")')
-    await expect(page.locator("text=Quy tắc tính lương")).toBeVisible()
-    await expect(page.locator("text=Ngày 1: Học việc (0đ)")).toBeVisible()
+    await page.locator('main button:has-text("Nhập Năng Suất")').click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog.locator("text=Quy tắc tính lương")).toBeVisible()
+    await expect(dialog.locator("text=Ngày 1: Học việc (0đ)")).toBeVisible()
   })
 })
 
@@ -242,7 +251,7 @@ test.describe("Salary Module", () => {
   })
 
   test("should display salary page", async ({ page }) => {
-    await expect(page.locator("h1")).toContainText("Bảng Lương")
+    await expect(pageH1(page)).toContainText("Bảng Lương")
   })
 
   test("should show salary calculation info", async ({ page }) => {
@@ -264,7 +273,7 @@ test.describe("Costs Module", () => {
   })
 
   test("should display costs page", async ({ page }) => {
-    await expect(page.locator("h1")).toContainText("Chi Phí")
+    await expect(pageH1(page)).toContainText("Chi Phí")
   })
 
   test("should show stats cards", async ({ page }) => {
@@ -274,8 +283,8 @@ test.describe("Costs Module", () => {
   })
 
   test("should open add cost dialog", async ({ page }) => {
-    await page.click('button:has-text("Thêm Chi Phí")')
-    await expect(page.locator('text=Thêm Chi Phí')).toBeVisible()
+    await page.locator('main button:has-text("Thêm Chi Phí")').click()
+    await expect(page.getByRole('heading', { name: 'Thêm Chi Phí' })).toBeVisible()
   })
 })
 
@@ -288,14 +297,15 @@ test.describe("Reports Module", () => {
   })
 
   test("should display reports page", async ({ page }) => {
-    await expect(page.locator("h1")).toContainText("Báo Cáo")
+    await expect(pageH1(page)).toContainText("Báo Cáo")
   })
 
   test("should show report type options", async ({ page }) => {
-    await expect(page.locator("text=Doanh Thu")).toBeVisible()
-    await expect(page.locator("text=Lợi Nhuận")).toBeVisible()
-    await expect(page.locator("text=Lương")).toBeVisible()
-    await expect(page.locator("text=Chi Phí")).toBeVisible()
+    const main = page.locator("main")
+    await expect(main.locator("text=Doanh Thu")).toBeVisible()
+    await expect(main.locator("text=Lợi Nhuận")).toBeVisible()
+    await expect(main.locator("text=Lương")).toBeVisible()
+    await expect(main.getByText("Chi Phí", { exact: true }).first()).toBeVisible()
   })
 })
 
@@ -308,7 +318,7 @@ test.describe("Inventory Module", () => {
   })
 
   test("should display inventory page", async ({ page }) => {
-    await expect(page.locator("h1")).toContainText("Tồn Kho")
+    await expect(pageH1(page)).toContainText("Tồn Kho")
   })
 
   test("should show inventory table", async ({ page }) => {
@@ -331,7 +341,7 @@ test.describe("Import Orders", () => {
   })
 
   test("should display import orders page", async ({ page }) => {
-    await expect(page.locator("h1")).toContainText("Nhập Hàng")
+    await expect(pageH1(page)).toContainText("Nhập Hàng")
   })
 
   test("should show table", async ({ page }) => {
@@ -346,7 +356,7 @@ test.describe("Export Orders", () => {
   })
 
   test("should display export orders page", async ({ page }) => {
-    await expect(page.locator("h1")).toContainText("Xuất Hàng")
+    await expect(pageH1(page)).toContainText("Xuất Hàng")
   })
 
   test("should show stats", async ({ page }) => {
@@ -423,3 +433,4 @@ test.describe("Salary Calculation Logic", () => {
     await expect(page.locator("text=≥ 50 suất: Thưởng 500đ/suất")).toBeVisible()
   })
 })
+
